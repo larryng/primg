@@ -42,23 +42,35 @@ pub fn run(config: Config) {
 //    img.save("out.bmp").expect("couldn't save image");
 
 //    (4)
-    let mut rng = rand::thread_rng();
-    let mut t = Triangle {
-        x1: 25,
-        y1: 25,
-        x2: 0,
-        y2: 50,
-        x3: 80,
-        y3: 25,
-    };
-    let mut pixels = Pixels::new(100, 100);
-    let mut v = (0..101).map(|_| Scanline::empty()).collect();
-    let color = Color::new(255, 0, 0, 64);
-    for _ in 0..30 {
-        let lines = t.rasterize(100, 100, &mut v);
-        pixels.draw_lines(&color, &lines);
-    }
-    image::save_buffer("out.png", &pixels.buf, pixels.w as u32, pixels.h as u32, image::ColorType::RGBA(8));
+//    let mut rng = rand::thread_rng();
+//    let mut t = Triangle {
+//        x1: 25,
+//        y1: 25,
+//        x2: 0,
+//        y2: 50,
+//        x3: 80,
+//        y3: 25,
+//    };
+//    let mut pixels = Pixels::new(100, 100);
+//    let mut v = (0..101).map(|_| Scanline::empty()).collect();
+//    let color = Color::new(255, 0, 0, 64);
+//    for _ in 0..30 {
+//        let lines = t.rasterize(100, 100, &mut v);
+//        pixels.draw_lines(&color, &lines);
+//    }
+//    image::save_buffer("out.png", &pixels.buf, pixels.w as u32, pixels.h as u32, image::ColorType::RGBA(8));
+
+//    (5)
+    let img = util::load_image(config.filepath.as_ref()).expect("couldn't load image");
+    let img = util::scaled_to_area(img, SIZE * SIZE).to_rgba();
+    println!("wtf");
+    let target = Pixels::from(img);
+    println!("wtf");
+    let mut current = Pixels::new(target.w, target.h);
+    println!("wtf");
+    current.erase(&target.average_color());
+    println!("wtf");
+    image::save_buffer("out.png", &current.buf, current.w as u32, current.h as u32, image::ColorType::RGBA(8));
 }
 
 #[derive(Debug)]
