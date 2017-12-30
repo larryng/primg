@@ -12,7 +12,7 @@ impl Scanline {
         Scanline { y: 0, x1: 0, x2: 0 }
     }
 
-    pub fn crop(&mut self, w: u32, h: u32) -> bool {
+    pub fn crop(&mut self, w: usize, h: usize) -> bool {
         let w = w as i32;
         let h = h as i32;
         if (self.y < 0 || self.y >= h) || self.x1 >= w || self.x2 < 0 {

@@ -7,7 +7,7 @@ pub enum ShapeType {
 }
 
 pub trait Shape: Clone {
-    fn mutate(self, w: u32, h: u32, rng: &mut ThreadRng) -> Self;
+    fn mutate(self, w: usize, h: usize, rng: &mut ThreadRng) -> Self;
 
-    fn rasterize<'a>(&self, w: u32, h: u32, buf: &'a mut Vec<Scanline>) -> &'a [Scanline];
+    fn rasterize<'a>(&self, w: usize, h: usize, buf: &'a mut Vec<Scanline>) -> &'a [Scanline];
 }

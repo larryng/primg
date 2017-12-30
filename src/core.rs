@@ -72,20 +72,26 @@ impl Pixels {
     }
 
     pub fn compute_color(&self, target: &Pixels, lines: &[Scanline], alpha: u8) -> Color {
-        let mut rsum = 0u64;
-        let mut gsum = 0u64;
-        let mut bsum = 0u64;
-        let mut count = 0u64;
-        let a = 0xffff / alpha as u64;
+        let mut rsum = 0i64;
+        let mut gsum = 0i64;
+        let mut bsum = 0i64;
+        let mut count = 0i64;
+        let a = 0xffff / alpha as i64;
         for line in lines {
             for x in line.x1..line.x2 + 1 {
                 let x = x as usize;
                 let y = line.y as usize;
                 let t = target.get(x, y);
+                let tr = t.r() as i64;
+                let tg = t.g() as i64;
+                let tb = t.b() as i64;
                 let c = self.get(x, y);
-                rsum += (t.r() - c.r()) as u64 * a + c.r() as u64 * 0x101;
-                gsum += (t.g() - c.g()) as u64 * a + c.g() as u64 * 0x101;
-                bsum += (t.b() - c.b()) as u64 * a + c.b() as u64 * 0x101;
+                let cr = c.r() as i64;
+                let cg = c.g() as i64;
+                let cb = c.b() as i64;
+                rsum += (tr - cr) * a + cr * 0x101;
+                gsum += (tg - cg) * a + cg * 0x101;
+                bsum += (tb - cb) * a + cb * 0x101;
                 count += 1;
             }
         }

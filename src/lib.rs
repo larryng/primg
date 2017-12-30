@@ -63,13 +63,29 @@ pub fn run(config: Config) {
 //    (5)
     let img = util::load_image(config.filepath.as_ref()).expect("couldn't load image");
     let img = util::scaled_to_area(img, SIZE * SIZE).to_rgba();
-    println!("wtf");
     let target = Pixels::from(img);
-    println!("wtf");
     let mut current = Pixels::new(target.w, target.h);
-    println!("wtf");
     current.erase(&target.average_color());
-    println!("wtf");
+    let count = 50;
+    let tw = target.w as i32 / count;
+    let th = target.h as i32 / count;
+    let mut v = (0..target.h + 1).map(|_| Scanline::empty()).collect();
+    for _ in 0..20 {
+        for i in 0..count {
+            for j in 0..count {
+                let x1 = i * tw;
+                let y1 = j * th;
+                let x2 = x1;
+                let y2 = y1 + th;
+                let x3 = x1 + tw;
+                let y3 = y1;
+                let t = Triangle { x1, y1, x2, y2, x3, y3 };
+                let lines = t.rasterize(target.w, target.h, &mut v);
+                let color = current.compute_color(&target, &lines, 128);
+                current.draw_lines(&color, lines);
+            }
+        }
+    }
     image::save_buffer("out.png", &current.buf, current.w as u32, current.h as u32, image::ColorType::RGBA(8));
 }
 

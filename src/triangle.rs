@@ -16,7 +16,7 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub fn create_random(w: u32, h: u32, rng: &mut ThreadRng) -> Triangle {
+    pub fn create_random(w: usize, h: usize, rng: &mut ThreadRng) -> Triangle {
         let x1 = rng.gen_range(0, w as i32);
         let y1 = rng.gen_range(0, h as i32);
         let x2 = x1 + rng.gen_range(0, 31) - 15;
@@ -63,7 +63,7 @@ impl Triangle {
 }
 
 impl Shape for Triangle {
-    fn mutate(mut self, w: u32, h: u32, rng: &mut ThreadRng) -> Triangle {
+    fn mutate(mut self, w: usize, h: usize, rng: &mut ThreadRng) -> Triangle {
         let w = w as i32;
         let h = h as i32;
         let m: i32 = 16;
@@ -95,12 +95,12 @@ impl Shape for Triangle {
         self
     }
 
-    fn rasterize<'a>(&self, w: u32, h: u32, buf: &'a mut Vec<Scanline>) -> &'a [Scanline] {
+    fn rasterize<'a>(&self, w: usize, h: usize, buf: &'a mut Vec<Scanline>) -> &'a [Scanline] {
         rasterize_triangle(w, h, self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, buf)
     }
 }
 
-fn rasterize_triangle<'a>(w: u32, h: u32,
+fn rasterize_triangle<'a>(w: usize, h: usize,
                           mut x1: i32, mut y1: i32,
                           mut x2: i32, mut y2: i32,
                           mut x3: i32, mut y3: i32,
@@ -132,7 +132,7 @@ fn rasterize_triangle<'a>(w: u32, h: u32,
     }
 }
 
-fn rasterize_triangle_bottom(w: u32, h: u32,
+fn rasterize_triangle_bottom(w: usize, h: usize,
                              x1: i32, y1: i32,
                              x2: i32, y2: i32,
                              x3: i32, y3: i32,
@@ -164,7 +164,7 @@ fn rasterize_triangle_bottom(w: u32, h: u32,
     return count;
 }
 
-fn rasterize_triangle_top<'a>(w: u32, h: u32,
+fn rasterize_triangle_top<'a>(w: usize, h: usize,
                               x1: i32, y1: i32,
                               x2: i32, y2: i32,
                               x3: i32, y3: i32,
