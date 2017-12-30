@@ -156,7 +156,6 @@ fn rasterize_triangle_bottom(w: u32, h: u32,
         line.y = y;
         line.x1 = a;
         line.x2 = b;
-        line.alpha = 0xff;
         if line.crop(w, h) {
             count += 1;
         }
@@ -189,7 +188,6 @@ fn rasterize_triangle_top<'a>(w: u32, h: u32,
         line.y = y;
         line.x1 = a;
         line.x2 = b;
-        line.alpha = 0xff;
         if line.crop(w, h) {
             count += 1;
         }

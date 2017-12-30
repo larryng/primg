@@ -54,8 +54,7 @@ pub fn run(config: Config) {
     let mut pixels = Pixels::new(100, 100);
     let mut v = (0..101).map(|_| Scanline::empty()).collect();
     let color = Color::new(255, 0, 0, 64);
-    for _ in 0..4 {
-//        t = t.mutate(100, 100, &mut rng);
+    for _ in 0..30 {
         let lines = t.rasterize(100, 100, &mut v);
         pixels.draw_lines(&color, &lines);
     }

@@ -37,27 +37,27 @@ impl Pixels {
         self.buf[i + 3] = color.a();
     }
 
-    pub fn draw_lines(&mut self, s: &Color, lines: &[Scanline]) {
-        const M: u32 = 0xffff;
-        const MS: u32 = (M >> 8);
-        let sr = s.r() as u32;
-        let sg = s.g() as u32;
-        let sb = s.b() as u32;
-        let sa = s.a() as u32;
+    pub fn draw_lines(&mut self, a: &Color, lines: &[Scanline]) {
+        let aa = a.a() as u32;
+        let ar = a.r() as u32 * aa;
+        let ag = a.g() as u32 * aa;
+        let ab = a.b() as u32 * aa;
         for line in lines {
-            let ma = line.alpha as u32;
-            let a = ((M - s.a() as u32 * ma as u32 / M) * 0x101);
             for x in line.x1..(line.x2 + 1) {
                 let x = x as usize;
                 let y = line.y as usize;
-                let d = self.get(x, y);
+                let b = self.get(x, y);
+                let ba = b.a() as u32;
+                let br = b.r() as u32 * ba;
+                let bg = b.g() as u32 * ba;
+                let bb = b.b() as u32 * ba;
+                let diff = 255 - aa;
                 let c = Color::new(
-                    ((d.r() as u32 * a + sr * ma) / MS) as u8,
-                    ((d.g() as u32 * a + sg * ma) / MS) as u8,
-                    ((d.b() as u32 * a + sb * ma) / MS) as u8,
-                    ((d.a() as u32 * a + sa * ma) / MS) as u8,
+                    ((ar + br * diff / 255) >> 8) as u8,
+                    ((ag + bg * diff / 255) >> 8) as u8,
+                    ((ab + bb * diff / 255) >> 8) as u8,
+                    (aa + ba * diff / 255) as u8,
                 );
-                println!("a={}", ((d.a() as u32 * a + sa * ma) / MS));
                 self.put(x, y, &c);
             }
         }

@@ -5,12 +5,11 @@ pub struct Scanline {
     pub y: i32,
     pub x1: i32,
     pub x2: i32,
-    pub alpha: u8,
 }
 
 impl Scanline {
     pub fn empty() -> Scanline {
-        Scanline { y: 0, x1: 0, x2: 0, alpha: 0 }
+        Scanline { y: 0, x1: 0, x2: 0 }
     }
 
     pub fn crop(&mut self, w: u32, h: u32) -> bool {
