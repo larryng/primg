@@ -1,0 +1,9 @@
+[package]
+name = "primg"
+version = "0.1.0"
+authors = ["Larry Ng <ng.larry@gmail.com>"]
+
+[dependencies]
+clap = "~2.29"
+image = "~0.18.0"
+rand = "0.4"
