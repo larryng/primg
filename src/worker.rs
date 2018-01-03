@@ -45,8 +45,40 @@ impl Worker {
         Pixels::difference_partial(&self.target, &current, &self.buffer, self.score, lines)
     }
 
-    pub fn best_hill_climb_state(&self, t: ShapeType, a: u8, n: u32, m: u8) -> State {
-        unimplemented!()
+    pub fn best_hill_climb_state(&mut self, t: ShapeType, a: u8, n: u32, m: u8) -> State {
+        let mut state = self.best_random_state(t, a, n);
+        self.hill_climb(&mut state, 100);
+        let mut best_state = state.clone();
+        let mut best_energy = best_state.energy(self);
+        for _ in 1..m {
+            state = self.best_random_state(t, a, n);
+            self.hill_climb(&mut state, 100);
+            let energy = state.energy(self);
+            if energy < best_energy {
+                best_energy = energy;
+                best_state.copy_from(&state);
+            }
+        }
+        best_state
+    }
+
+    pub fn hill_climb(&mut self, state: &mut State, max_age: u32) {
+        let mut undo = state.clone();
+        let mut best_state = state.clone();
+        let mut best_energy = best_state.energy(self);
+        let mut age = 0;
+        while age < max_age {
+            state.do_move(self, &mut undo);
+            let energy = state.energy(self);
+            if energy > best_energy {
+                state.copy_from(&undo);
+            } else {
+                best_energy = energy;
+                best_state.copy_from(state);
+                age -= 1;
+            }
+        }
+        state.copy_from(&best_state);
     }
 
     pub fn best_random_state(&mut self, t: ShapeType, a: u8, n: u32) -> State {
@@ -55,7 +87,7 @@ impl Worker {
         for i in 1..n {
             let mut state = self.random_state(t, a);
             let energy = state.energy(self);
-            if i == 0 || energy < best_energy {
+            if energy < best_energy {
                 best_energy = energy;
                 best_state = state;
             }

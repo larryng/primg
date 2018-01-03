@@ -1,6 +1,7 @@
 use shape::Shape;
 use worker::Worker;
 
+#[derive(Clone)]
 pub struct State {
     pub shape: Shape,
     pub alpha: u8,
@@ -17,5 +18,19 @@ impl State {
             self.score = worker.energy(&self.shape, self.alpha);
         }
         self.score
+    }
+
+    pub fn do_move(&mut self, worker: &mut Worker, undo: &mut State) {
+        undo.copy_from(self);
+
+        let old_state = self.clone();
+        self.shape.mutate(worker.w, worker.h, &mut worker.rng);
+        self.score = -1.0;
+    }
+
+    pub fn copy_from(&mut self, undo: &State) {
+        self.shape = undo.shape.clone();
+        self.alpha = undo.alpha;
+        self.score = undo.score;
     }
 }

@@ -47,8 +47,7 @@ impl Model {
     pub fn step(&mut self, t: ShapeType, a: u8, n: u32, m: u8) {
         let state = {
             let worker = &mut self.workers[0];
-//            worker.best_hill_climb_state(t, a, n, m)
-            worker.best_random_state(t, a, n)
+            worker.best_hill_climb_state(t, a, n, m)
         };
         println!("adding shape {:?}", state.shape);
         self.add(state.shape, state.alpha);
@@ -66,6 +65,7 @@ impl Model {
         self.score = score;
     }
 
+    // for debugging
     pub fn save_current(&self, path: &str) -> io::Result<()> {
         let current = self.current.borrow();
         image::save_buffer(path,

@@ -6,7 +6,6 @@ mod model;
 mod scanline;
 mod shape;
 mod state;
-mod triangle;
 mod util;
 mod worker;
 
@@ -25,15 +24,6 @@ const SIZE: usize = 256;
 
 pub fn run(config: Config) {
     println!("{:?}", config);
-
-    // TODO: test model best random
-    let img = util::load_image(config.filepath.as_ref()).expect("couldn't load image");
-    let img = util::scaled_to_area(img, SIZE * SIZE);
-    let mut model = Model::new(img, 1);
-    for _ in 0..100 {
-        model.step(ShapeType::Triangle, 128, 1000, 4);
-    }
-    model.save_current("test.png").expect("wtf");
 
 //    (0)
 //    let mut rng = rand::thread_rng();
@@ -113,6 +103,16 @@ pub fn run(config: Config) {
 //    let img = util::scaled_to_area(img, SIZE * SIZE).to_rgba();
 //    let target = Pixels::from(img);
 //    let worker = Worker::new(&target);
+
+//    (7)
+    let img = util::load_image(config.filepath.as_ref()).expect("couldn't load image");
+    let img = util::scaled_to_area(img, SIZE * SIZE);
+    let mut model = Model::new(img, 1);
+    for _ in 0..config.n {
+        model.step(config.t, 128, 1000, 4);
+    }
+    model.save_current("test.png").expect("wtf");
+
 }
 
 #[derive(Debug)]
