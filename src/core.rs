@@ -3,6 +3,7 @@ use image::RgbaImage;
 use image::math::utils::clamp;
 use scanline::Scanline;
 
+#[derive(Clone)]
 pub struct Pixels {
     pub buf: [u8; Pixels::BUF_SIZE],
     pub w: usize,
@@ -79,13 +80,11 @@ impl Pixels {
         let a = 0xffff / alpha as i64;
         for line in lines {
             for x in line.x1..line.x2 + 1 {
-                let x = x as usize;
-                let y = line.y as usize;
-                let t = target.get(x, y);
+                let t = target.get(x, line.y);
                 let tr = t.r() as i64;
                 let tg = t.g() as i64;
                 let tb = t.b() as i64;
-                let c = self.get(x, y);
+                let c = self.get(x, line.y);
                 let cr = c.r() as i64;
                 let cg = c.g() as i64;
                 let cb = c.b() as i64;
@@ -104,6 +103,15 @@ impl Pixels {
         return Color::new(r as u8, g as u8, b as u8, alpha);
     }
 
+    pub fn copy_lines(&mut self, src: &Pixels, lines: &[Scanline]) {
+        for line in lines {
+            let a = self.index(line.x1, line.y);
+            let b = a + (line.x2 - line.x1 + 1) * 4;
+            let dst = &mut self.buf[a..b];
+            dst.copy_from_slice(&src.buf[a..b])
+        }
+    }
+
     pub fn draw_lines(&mut self, a: &Color, lines: &[Scanline]) {
         let aa = a.a() as u32;
         let ar = a.r() as u32 * aa;
@@ -111,9 +119,7 @@ impl Pixels {
         let ab = a.b() as u32 * aa;
         for line in lines {
             for x in line.x1..(line.x2 + 1) {
-                let x = x as usize;
-                let y = line.y as usize;
-                let b = self.get(x, y);
+                let b = self.get(x, line.y);
                 let ba = b.a() as u32;
                 let br = b.r() as u32 * ba;
                 let bg = b.g() as u32 * ba;
@@ -125,9 +131,59 @@ impl Pixels {
                     ((ab + bb * diff / 255) >> 8) as u8,
                     (aa + ba * diff / 255) as u8,
                 );
-                self.put(x, y, &c);
+                self.put(x, line.y, &c);
             }
         }
+    }
+
+    pub fn difference_full(a: &Pixels, b: &Pixels) -> f64 {
+        let w = a.w;
+        let h = a.h;
+        let mut total = 0i64;
+        for y in 0..h {
+            for x in 0..w {
+                let pa = a.get(x, y);
+                let pb = b.get(x, y);
+
+                let dr = pa.r() as i64 - pb.r() as i64;
+                let dg = pa.g() as i64 - pb.g() as i64;
+                let db = pa.b() as i64 - pb.b() as i64;
+                let da = pa.a() as i64 - pb.a() as i64;
+                total += (dr * dr) + (dg * dg) + (db * db) + (da * da);
+            }
+        }
+        (total as f64 / (w * h * 4) as f64).sqrt() / 255.0
+    }
+
+    pub fn difference_partial(target: &Pixels,
+                              before: &Pixels,
+                              after: &Pixels,
+                              score: f64,
+                              lines: &[Scanline]) -> f64 {
+        let w = target.w;
+        let h = target.h;
+        let mut total = ((score * 255.0).powi(2) * (w * h * 4) as f64) as i64;
+        for line in lines {
+            for x in line.x1..line.x2 + 1 {
+                let pt = target.get(x, line.y);
+                let pb = before.get(x, line.y);
+                let pa = after.get(x, line.y);
+
+                let dr1 = pt.r() as i64 - pb.r() as i64;
+                let dg1 = pt.g() as i64 - pb.g() as i64;
+                let db1 = pt.b() as i64 - pb.b() as i64;
+                let da1 = pt.a() as i64 - pb.a() as i64;
+
+                let dr2 = pt.r() as i64 - pa.r() as i64;
+                let dg2 = pt.g() as i64 - pa.g() as i64;
+                let db2 = pt.b() as i64 - pa.b() as i64;
+                let da2 = pt.a() as i64 - pa.a() as i64;
+
+                total -= ((dr1 * dr1) + (dg1 * dg1) + (db1 * db1) + (da1 * da1)) as i64;
+                total += ((dr2 * dr2) + (dg2 * dg2) + (db2 * db2) + (da2 * da2)) as i64;
+            }
+        }
+        (total as f64 / (w*h*4) as f64).sqrt() / 255.0
     }
 
     fn index(&self, x: usize, y: usize) -> usize {
