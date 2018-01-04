@@ -2,6 +2,7 @@ use super::SIZE;
 use image::RgbaImage;
 use image::math::utils::clamp;
 use scanline::Scanline;
+use std::marker::Sync;
 
 #[derive(Clone)]
 pub struct Pixels {
@@ -9,6 +10,8 @@ pub struct Pixels {
     pub w: usize,
     pub h: usize,
 }
+
+unsafe impl Sync for Pixels {}
 
 impl Pixels {
     pub const BUF_SIZE: usize = SIZE * SIZE * 4;
@@ -183,7 +186,7 @@ impl Pixels {
                 total += ((dr2 * dr2) + (dg2 * dg2) + (db2 * db2) + (da2 * da2)) as i64;
             }
         }
-        (total as f64 / (w*h*4) as f64).sqrt() / 255.0
+        (total as f64 / (w * h * 4) as f64).sqrt() / 255.0
     }
 
     fn index(&self, x: usize, y: usize) -> usize {

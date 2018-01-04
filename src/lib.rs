@@ -1,5 +1,7 @@
 extern crate image;
+extern crate num_cpus;
 extern crate rand;
+extern crate threadpool;
 
 mod core;
 mod model;
@@ -105,21 +107,23 @@ pub fn run(config: Config) {
 //    let worker = Worker::new(&target);
 
 //    (7)
-    let img = util::load_image(config.filepath.as_ref()).expect("couldn't load image");
+    let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
     let img = util::scaled_to_area(img, SIZE * SIZE);
-    let mut model = Model::new(img, 1);
-    for _ in 0..config.n {
-        model.step(config.t, 128, 1000, 4);
+    let mut model = Model::new(img, num_cpus::get());
+    for _ in 0..config.num_shapes {
+        model.step(config.shape_type, 128, 1000, 1);
     }
-    model.save_current("test.png").expect("wtf");
+    model.save_current(&config.out_path).expect("wtf");
 
 }
 
 #[derive(Debug)]
 pub struct Config {
-    pub filepath: String,
-    pub n: u32,
-    pub t: ShapeType,
+    pub in_path: String,
+    pub out_path: String,
+    pub num_shapes: u32,
+    pub shape_type: ShapeType,
+    pub out_size: u32,
 }
 
 //

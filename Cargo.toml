@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Larry Ng <ng.larry@gmail.com>"]
 
 [dependencies]
-clap = "~2.29"
-image = "~0.18.0"
+clap = "2.29"
+image = "0.18.0"
+num_cpus = "1.7.0"
 rand = "0.4"
+threadpool = "1.7.1"

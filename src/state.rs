@@ -23,7 +23,6 @@ impl State {
     pub fn do_move(&mut self, worker: &mut Worker, undo: &mut State) {
         undo.copy_from(self);
 
-        let old_state = self.clone();
         self.shape.mutate(worker.w, worker.h, &mut worker.rng);
         self.score = -1.0;
     }

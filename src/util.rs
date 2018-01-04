@@ -3,7 +3,7 @@ use image::{ImageResult, DynamicImage};
 use image::imageops::FilterType;
 use image::GenericImage;
 use rand::Rand;
-use rand::ThreadRng;
+use rand::StdRng;
 use rand::distributions::normal::StandardNormal;
 use std::f64::consts::PI;
 
@@ -22,7 +22,7 @@ pub fn scaled_to_area(img: DynamicImage, area: usize) -> DynamicImage {
     }
 }
 
-pub fn rng_normal(rng: &mut ThreadRng) -> f64 {
+pub fn rng_normal(rng: &mut StdRng) -> f64 {
     StandardNormal::rand(rng).0
 }
 

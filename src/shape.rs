@@ -1,5 +1,5 @@
 use image::math::utils::clamp;
-use rand::{Rng, ThreadRng};
+use rand::{Rng, StdRng};
 use scanline::Scanline;
 use std::mem::swap;
 use util::{degrees, rng_normal};
@@ -15,13 +15,13 @@ pub enum Shape {
 }
 
 impl Shape {
-    pub fn random(t: ShapeType, w: usize, h: usize, rng: &mut ThreadRng) -> Shape {
+    pub fn random(t: ShapeType, w: usize, h: usize, rng: &mut StdRng) -> Shape {
         match t {
             ShapeType::Triangle => random_triangle(w, h, rng)
         }
     }
 
-    pub fn mutate(&mut self, w: usize, h: usize, rng: &mut ThreadRng) {
+    pub fn mutate(&mut self, w: usize, h: usize, rng: &mut StdRng) {
         match *self {
             Shape::Triangle {
                 ref mut x1, ref mut y1,
@@ -40,7 +40,7 @@ impl Shape {
     }
 }
 
-fn random_triangle(w: usize, h: usize, rng: &mut ThreadRng) -> Shape {
+fn random_triangle(w: usize, h: usize, rng: &mut StdRng) -> Shape {
     let mut x1 = rng.gen_range(0, w as i32);
     let mut y1 = rng.gen_range(0, h as i32);
     let mut x2 = x1 + rng.gen_range(0, 31) - 15;
@@ -51,7 +51,7 @@ fn random_triangle(w: usize, h: usize, rng: &mut ThreadRng) -> Shape {
     Shape::Triangle { x1, y1, x2, y2, x3, y3 }
 }
 
-fn mutate_triangle(w: usize, h: usize, rng: &mut ThreadRng,
+fn mutate_triangle(w: usize, h: usize, rng: &mut StdRng,
                    x1: &mut i32, y1: &mut i32,
                    x2: &mut i32, y2: &mut i32,
                    x3: &mut i32, y3: &mut i32) {

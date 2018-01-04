@@ -4,29 +4,34 @@ use image;
 use image::{DynamicImage, ImageBuffer};
 use std::io;
 use std::rc::Rc;
-use std::cell::RefCell;
+use std::sync::{Arc, RwLock};
+use std::sync::mpsc;
+use threadpool::ThreadPool;
 
 use core::{Color, Pixels};
 use shape::{Shape, ShapeType};
 use scanline::Scanline;
+use state::State;
 use util;
 use worker::Worker;
 
 pub struct Model {
+    n_workers: usize,
     sw: usize,
     sh: usize,
     background: Color,
-    target: Rc<Pixels>,
-    current: Rc<RefCell<Pixels>>,
+    target: Arc<Pixels>,
+    current: Arc<RwLock<Pixels>>,
     score: f64,
     shapes: Vec<Shape>,
     colors: Vec<Color>,
-    workers: Vec<Worker>,
+    workers: Vec<Arc<RwLock<Worker>>>,
+    pool: ThreadPool,
     scanlines: Vec<Scanline>,
 }
 
 impl Model {
-    pub fn new(img: DynamicImage, nworkers: u32) -> Model {
+    pub fn new(img: DynamicImage, n_workers: usize) -> Model {
         let img = util::scaled_to_area(img, SIZE * SIZE).to_rgba();
         let target = Pixels::from(img);
         let sw = target.w;
@@ -35,26 +40,50 @@ impl Model {
         let mut current = Pixels::new(sw, sh);
         current.erase(&background);
         let score = Pixels::difference_full(&target, &current);
-        let target = Rc::new(target);
-        let current = Rc::new(RefCell::new(current));
+        let target = Arc::new(target);
+        let current = Arc::new(RwLock::new(current));
         let shapes = Vec::new();
         let colors = Vec::new();
-        let workers = (0..nworkers).map(|_| Worker::new(Rc::clone(&target), Rc::clone(&current))).collect();
+        let workers = (0..n_workers).map(|_| Arc::new(RwLock::new(Worker::new(target.clone(), current.clone())))).collect();
+        let pool = ThreadPool::new(n_workers);
         let scanlines = (0..sh + 1).map(|_| Scanline::empty()).collect();
-        Model { sw, sh, background, target, current, score, shapes, colors, workers, scanlines }
+        Model { n_workers, sw, sh, background, target, current, score, shapes, colors, workers, pool, scanlines }
     }
 
     pub fn step(&mut self, t: ShapeType, a: u8, n: u32, m: u8) {
-        let state = {
-            let worker = &mut self.workers[0];
-            worker.best_hill_climb_state(t, a, n, m)
-        };
-        println!("adding shape {:?}", state.shape);
-        self.add(state.shape, state.alpha);
+        let (tx, rx) = mpsc::channel();
+
+        for worker in &self.workers {
+            let worker = worker.clone();
+            let tx = tx.clone();
+            self.pool.execute(move || {
+                let mut worker = worker.write().unwrap();
+                let mut state = worker.best_hill_climb_state(t, a, n, m);
+                let energy = state.energy(&mut worker);
+                tx.send((state, energy));
+            });
+        }
+
+        let (state, energy) = rx.recv().unwrap();
+        let mut best_state = state;
+        let mut best_energy = energy;
+        let mut count = 1;
+        for (state, energy) in rx {
+            count += 1;
+            if energy < best_energy {
+                best_state = state;
+                best_energy = energy;
+            }
+            if count >= self.n_workers {
+                break;
+            }
+        }
+        println!("adding {:?}", best_state.shape);
+        self.add(best_state.shape, best_state.alpha);
     }
 
     pub fn add(&mut self, shape: Shape, alpha: u8) {
-        let mut current = self.current.borrow_mut();
+        let mut current = self.current.write().unwrap();
         let before = current.clone();
         let lines = &shape.rasterize(self.sw, self.sh, &mut self.scanlines);
         let color = current.compute_color(&self.target, lines, alpha);
@@ -67,7 +96,7 @@ impl Model {
 
     // for debugging
     pub fn save_current(&self, path: &str) -> io::Result<()> {
-        let current = self.current.borrow();
+        let current = self.current.read().unwrap();
         image::save_buffer(path,
                            &current.buf,
                            self.sw as u32,
