@@ -16,9 +16,12 @@ use worker::Worker;
 
 pub struct Model {
     n_workers: usize,
+    w: usize,
+    h: usize,
     sw: usize,
     sh: usize,
-    background: Color,
+    scale: f64,
+    bg: Color,
     target: Arc<Pixels>,
     current: Arc<RwLock<Pixels>>,
     score: f64,
@@ -30,14 +33,18 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(img: DynamicImage, n_workers: usize) -> Model {
+    pub fn new(img: DynamicImage, n_workers: usize, out_size: usize) -> Model {
         let img = util::scaled_to_area(img, SIZE * SIZE).to_rgba();
         let target = Pixels::from(img);
-        let sw = target.w;
-        let sh = target.h;
-        let background = target.average_color();
-        let mut current = Pixels::new(sw, sh);
-        current.erase(&background);
+        let w = target.w;
+        let h = target.h;
+        let bigger = cmp::max(w, h);
+        let scale = out_size as f64 / bigger as f64;
+        let sw = util::scale_dimen(w as i32, scale) as usize;
+        let sh = util::scale_dimen(h as i32, scale) as usize;
+        let bg = target.average_color();
+        let mut current = Pixels::new(w, h);
+        current.erase(&bg);
         let score = Pixels::difference_full(&target, &current);
         let target = Arc::new(target);
         let current = Arc::new(RwLock::new(current));
@@ -45,8 +52,8 @@ impl Model {
         let colors = Vec::new();
         let workers = (0..n_workers).map(|_| Arc::new(RwLock::new(Worker::new(target.clone(), current.clone())))).collect();
         let pool = ThreadPool::new(n_workers);
-        let scanlines = Scanline::buffer(sh);
-        Model { n_workers, sw, sh, background, target, current, score, shapes, colors, workers, pool, scanlines }
+        let scanlines = Scanline::buffer(h);
+        Model { n_workers, w, h, sw, sh, scale, bg, target, current, score, shapes, colors, workers, pool, scanlines }
     }
 
     pub fn step(&mut self, t: ShapeType, a: u8, n: u32, m: u8) {
@@ -86,7 +93,7 @@ impl Model {
     pub fn add(&mut self, shape: Shape, alpha: u8) {
         let mut current = self.current.write().unwrap();
         let before = current.clone();
-        let lines = &shape.rasterize(self.sw, self.sh, &mut self.scanlines);
+        let lines = &shape.rasterize(self.w, self.h, &mut self.scanlines);
         let color = current.compute_color(&self.target, lines, alpha);
         current.draw_lines(&color, &lines);
         let score = Pixels::difference_partial(&self.target, &before, &current, self.score, lines);
@@ -95,14 +102,47 @@ impl Model {
         self.score = score;
     }
 
-    pub fn save_rasterized(&self, path: &str, out_size: u32) -> io::Result<()> {
-        let bigger = cmp::max(self.sw, self.sh);
-        let scale = out_size as f64 / bigger as f64;
-        let w = (self.sw as f64 * scale).round() as usize;
-        let h = (self.sh as f64 * scale).round() as usize;
+    pub fn svg(&self) -> String {
+        let mut lines = vec![];
+        lines.push(format!("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"{}\" height=\"{}\">",
+                           self.sw, self.sh));
+        lines.push(format!("<rect x=\"0\" y=\"0\" width=\"{}\" height=\"{}\" fill=\"#{:02x}{:02x}{:02x}\" />",
+                           self.sw, self.sh, self.bg.r(), self.bg.g(), self.bg.b()));
+        lines.push(format!("<g transform=\"scale({}) translate(0.5 0.5)\">", self.scale));
+
+        for (i, shape) in self.shapes.iter().enumerate() {
+            let c = &self.colors[i];
+            let attrs = format!("fill=\"#{:02x}{:02x}{:02x}\" fill-opacity=\"{}\"",
+                                c.r(), c.g(), c.b(), c.a() as f64 / 255.0);
+            lines.push(shape.svg(&attrs));
+        }
+
+        lines.push(String::from("</g>"));
+        lines.push(String::from("</svg>"));
+        lines.join("\n")
+//        bg := model.Background
+//        var lines []string
+//        lines = append(lines, fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"%d\" height=\"%d\">", model.Sw, model.Sh))
+//        lines = append(lines, fmt.Sprintf("<rect x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" fill=\"#%02x%02x%02x\" />", model.Sw, model.Sh, bg.R, bg.G, bg.B))
+//        lines = append(lines, fmt.Sprintf("<g transform=\"scale(%f) translate(0.5 0.5)\">", model.Scale))
+//        for i, shape := range model.Shapes {
+//            c := model.Colors[i]
+//            attrs := "fill=\"#%02x%02x%02x\" fill-opacity=\"%f\""
+//            attrs = fmt.Sprintf(attrs, c.R, c.G, c.B, float64(c.A)/255)
+//            lines = append(lines, shape.SVG(attrs))
+//        }
+//        lines = append(lines, "</g>")
+//        lines = append(lines, "</svg>")
+//        return strings.Join(lines, "\n")
+    }
+
+    pub fn save_rasterized(&self, path: &str) -> io::Result<()> {
+        let w = self.sw;
+        let h = self.sh;
+        let scale = self.scale;
         println!("w={}, h={}, scale={}", w, h, scale);
         let mut img = vec![0; w * h * 4];
-        util::erase(&mut img, &self.background);
+        util::erase(&mut img, &self.bg);
         let mut buf = Scanline::buffer(h);
 
         for i in 0..self.shapes.len() {
@@ -124,8 +164,8 @@ impl Model {
         let current = self.current.read().unwrap();
         image::save_buffer(path,
                            &current.buf,
-                           self.sw as u32,
-                           self.sh as u32,
+                           self.w as u32,
+                           self.h as u32,
                            image::ColorType::RGBA(8))
     }
 }

@@ -13,6 +13,9 @@ mod worker;
 
 pub use shape::ShapeType;
 
+use std::io::Write;
+use std::fs::File;
+
 use model::Model;
 
 const SIZE: usize = 256;
@@ -23,11 +26,16 @@ pub fn run(config: Config) {
 
     let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
     let img = util::scaled_to_area(img, AREA);
-    let mut model = Model::new(img, num_cpus::get());
+    let mut model = Model::new(img, num_cpus::get(), config.out_size);
     for _ in 0..config.num_shapes {
         model.step(config.shape_type, 128, 1000, 1);
     }
-    model.save_rasterized(&config.out_path, config.out_size).expect("wtf");
+    if config.out_path.ends_with(".svg") {
+        let mut file = File::create(&config.out_path).unwrap();
+        file.write_all(model.svg().as_bytes()).unwrap();
+    } else {
+        model.save_rasterized(&config.out_path).expect("wtf");
+    }
 
 }
 
@@ -37,7 +45,7 @@ pub struct Config {
     pub out_path: String,
     pub num_shapes: u32,
     pub shape_type: ShapeType,
-    pub out_size: u32,
+    pub out_size: usize,
 }
 
 //

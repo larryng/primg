@@ -14,6 +14,10 @@ pub fn load_image(filepath: &str) -> ImageResult<DynamicImage> {
     image::open(filepath)
 }
 
+pub fn scale_dimen(a: i32, scale: f64) -> i32 {
+    (a as f64 * scale).round() as i32
+}
+
 pub fn scaled_to_area(img: DynamicImage, area: usize) -> DynamicImage {
     let w = img.width();
     let h = img.height();

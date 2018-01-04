@@ -5,7 +5,7 @@ use rand::{Rng, StdRng};
 use std::mem::swap;
 
 use scanline::Scanline;
-use util::{degrees, rng_normal};
+use util::{degrees, rng_normal, scale_dimen};
 
 #[derive(Debug, Copy, Clone)]
 pub enum ShapeType {
@@ -42,6 +42,15 @@ impl Shape {
         }
     }
 
+    pub fn svg(&self, attrs: &str) -> String {
+        match *self {
+            Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
+                format!("<polygon {} points=\"{},{} {},{} {},{}\" />",
+                        attrs, x1, y1, x2, y2, x3, y3)
+            },
+        }
+    }
+
     pub fn scaled(&self, scale: f64) -> Shape {
         match *self {
             Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
@@ -71,10 +80,6 @@ impl Shape {
 //            },
 //        }
 //    }
-}
-
-fn scale_dimen(a: i32, scale: f64) -> i32 {
-    (a as f64 * scale).round() as i32
 }
 
 fn random_triangle(w: usize, h: usize, rng: &mut StdRng) -> Shape {

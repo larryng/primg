@@ -38,7 +38,7 @@ fn main() {
         "triangle" => primg::ShapeType::Triangle,
         _ => panic!("invalid shape"),
     };
-    let out_size = matches.value_of("output-size").unwrap().parse::<u32>().unwrap();
+    let out_size = matches.value_of("output-size").unwrap().parse::<usize>().unwrap();
 
     let config = primg::Config {
         in_path,
