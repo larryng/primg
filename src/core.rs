@@ -1,8 +1,10 @@
 use super::SIZE;
-use image::RgbaImage;
+use image::{Pixel, Rgba, RgbaImage};
 use image::math::utils::clamp;
-use scanline::Scanline;
 use std::marker::Sync;
+
+use scanline::Scanline;
+use util;
 
 #[derive(Clone)]
 pub struct Pixels {
@@ -45,15 +47,7 @@ impl Pixels {
     }
 
     pub fn erase(&mut self, color: &Color) {
-        let mut i = 0;
-        let len = Pixels::BUF_SIZE;
-        while i < len {
-            self.buf[i] = color.r();
-            self.buf[i + 1] = color.g();
-            self.buf[i + 2] = color.b();
-            self.buf[i + 3] = color.a();
-            i += 4;
-        }
+        util::erase(&mut self.buf, color);
     }
 
     pub fn average_color(&self) -> Color {
@@ -116,27 +110,7 @@ impl Pixels {
     }
 
     pub fn draw_lines(&mut self, a: &Color, lines: &[Scanline]) {
-        let aa = a.a() as u32;
-        let ar = a.r() as u32 * aa;
-        let ag = a.g() as u32 * aa;
-        let ab = a.b() as u32 * aa;
-        for line in lines {
-            for x in line.x1..(line.x2 + 1) {
-                let b = self.get(x, line.y);
-                let ba = b.a() as u32;
-                let br = b.r() as u32 * ba;
-                let bg = b.g() as u32 * ba;
-                let bb = b.b() as u32 * ba;
-                let diff = 255 - aa;
-                let c = Color::new(
-                    ((ar + br * diff / 255) >> 8) as u8,
-                    ((ag + bg * diff / 255) >> 8) as u8,
-                    ((ab + bb * diff / 255) >> 8) as u8,
-                    (aa + ba * diff / 255) as u8,
-                );
-                self.put(x, line.y, &c);
-            }
-        }
+        util::draw_lines(&mut self.buf, self.w, self.h, a, lines);
     }
 
     pub fn difference_full(a: &Pixels, b: &Pixels) -> f64 {
@@ -205,6 +179,10 @@ impl Color {
         Color::new(c[0], c[1], c[2], c[3])
     }
 
+    pub fn to_rgba(&self) -> Rgba<u8> {
+        Pixel::from_channels(self.r(), self.g(), self.b(), self.a() )
+    }
+
     #[inline(always)]
     pub fn r(&self) -> u8 {
         (self.0 >> 24) as u8
@@ -225,4 +203,3 @@ impl Color {
         (self.0 & 0xff) as u8
     }
 }
-

@@ -12,6 +12,10 @@ impl Scanline {
         Scanline { y: 0, x1: 0, x2: 0 }
     }
 
+    pub fn buffer(h: usize) -> Vec<Scanline> {
+        (0..h + 1).map(|_| Scanline::empty()).collect()
+    }
+
     pub fn validating_set(&mut self, w: usize, h: usize, y: i32, x1: i32, x2: i32) -> bool {
         let w = w as i32;
         let h = h as i32;

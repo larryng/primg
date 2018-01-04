@@ -7,7 +7,7 @@ fn main() {
     let matches = App::new("primg")
         .arg(Arg::with_name("shape")
             .help("Shape type")
-            .short("s")
+            .short("t")
             .long("shape")
             .takes_value(true)
             .default_value("triangle"))
@@ -38,7 +38,7 @@ fn main() {
         "triangle" => primg::ShapeType::Triangle,
         _ => panic!("invalid shape"),
     };
-    let out_size = matches.value_of("num-shapes").unwrap().parse::<u32>().unwrap();
+    let out_size = matches.value_of("output-size").unwrap().parse::<u32>().unwrap();
 
     let config = primg::Config {
         in_path,

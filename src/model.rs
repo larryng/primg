@@ -1,17 +1,16 @@
 use super::SIZE;
 
 use image;
-use image::{DynamicImage, ImageBuffer};
+use image::DynamicImage;
 use std::io;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc;
+use std::cmp;
 use threadpool::ThreadPool;
 
 use core::{Color, Pixels};
 use shape::{Shape, ShapeType};
 use scanline::Scanline;
-use state::State;
 use util;
 use worker::Worker;
 
@@ -46,21 +45,23 @@ impl Model {
         let colors = Vec::new();
         let workers = (0..n_workers).map(|_| Arc::new(RwLock::new(Worker::new(target.clone(), current.clone())))).collect();
         let pool = ThreadPool::new(n_workers);
-        let scanlines = (0..sh + 1).map(|_| Scanline::empty()).collect();
+        let scanlines = Scanline::buffer(sh);
         Model { n_workers, sw, sh, background, target, current, score, shapes, colors, workers, pool, scanlines }
     }
 
     pub fn step(&mut self, t: ShapeType, a: u8, n: u32, m: u8) {
         let (tx, rx) = mpsc::channel();
 
+        let score = self.score;
         for worker in &self.workers {
             let worker = worker.clone();
             let tx = tx.clone();
             self.pool.execute(move || {
                 let mut worker = worker.write().unwrap();
+                worker.init(score);
                 let mut state = worker.best_hill_climb_state(t, a, n, m);
                 let energy = state.energy(&mut worker);
-                tx.send((state, energy));
+                tx.send((state, energy)).unwrap();
             });
         }
 
@@ -94,8 +95,32 @@ impl Model {
         self.score = score;
     }
 
+    pub fn save_rasterized(&self, path: &str, out_size: u32) -> io::Result<()> {
+        let bigger = cmp::max(self.sw, self.sh);
+        let scale = out_size as f64 / bigger as f64;
+        let w = (self.sw as f64 * scale).round() as usize;
+        let h = (self.sh as f64 * scale).round() as usize;
+        println!("w={}, h={}, scale={}", w, h, scale);
+        let mut img = vec![0; w * h * 4];
+        util::erase(&mut img, &self.background);
+        let mut buf = Scanline::buffer(h);
+
+        for i in 0..self.shapes.len() {
+            let shape = &self.shapes[i];
+            let color = &self.colors[i];
+            let lines = shape.scaled(scale).rasterize(w, h, &mut buf);
+            util::draw_lines(&mut img, w, h, &color, lines);
+        }
+
+        image::save_buffer(path,
+                           &img,
+                           w as u32,
+                           h as u32,
+                           image::ColorType::RGBA(8))
+    }
+
     // for debugging
-    pub fn save_current(&self, path: &str) -> io::Result<()> {
+    pub fn _save_current(&self, path: &str) -> io::Result<()> {
         let current = self.current.read().unwrap();
         image::save_buffer(path,
                            &current.buf,

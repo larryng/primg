@@ -1,7 +1,10 @@
 use image::math::utils::clamp;
+//use imageproc::drawing;
+//use imageproc::drawing::Point;
 use rand::{Rng, StdRng};
-use scanline::Scanline;
 use std::mem::swap;
+
+use scanline::Scanline;
 use util::{degrees, rng_normal};
 
 #[derive(Debug, Copy, Clone)]
@@ -38,6 +41,40 @@ impl Shape {
             },
         }
     }
+
+    pub fn scaled(&self, scale: f64) -> Shape {
+        match *self {
+            Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
+                Shape::Triangle {
+                    x1: scale_dimen(x1, scale),
+                    y1: scale_dimen(y1, scale),
+                    x2: scale_dimen(x2, scale),
+                    y2: scale_dimen(y2, scale),
+                    x3: scale_dimen(x3, scale),
+                    y3: scale_dimen(y3, scale),
+                }
+            },
+        }
+    }
+
+//    pub fn draw(&self, img: &mut RgbaImage, color: &Color, scale: f64, buf: &mut Vec<Scanline>) {
+//        match *self {
+//            Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
+//                let poly = &[
+//                    Point::new((x1 as f64 * scale) as i32, (y1 as f64 * scale) as i32),
+//                    Point::new((x2 as f64 * scale) as i32, (y2 as f64 * scale) as i32),
+//                    Point::new((x3 as f64 * scale) as i32, (y3 as f64 * scale) as i32),
+//                ];
+//                let color = color.to_rgba();
+//                println!("drawing {:?}, {:?}", self, color);
+//                drawing::draw_convex_polygon_mut(img, poly, color);
+//            },
+//        }
+//    }
+}
+
+fn scale_dimen(a: i32, scale: f64) -> i32 {
+    (a as f64 * scale).round() as i32
 }
 
 fn random_triangle(w: usize, h: usize, rng: &mut StdRng) -> Shape {

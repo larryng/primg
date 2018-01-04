@@ -1,11 +1,6 @@
-use image::RgbaImage;
 use rand;
-use std::sync::mpsc;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
-use std::cell::{Ref, RefCell};
 
-use core;
 use core::Pixels;
 use scanline::Scanline;
 use shape::{Shape, ShapeType};
@@ -30,7 +25,7 @@ impl Worker {
         let h = target.h;
         let buffer = Pixels::new(w, h);
         let rng = rand::StdRng::new().expect("wtf");
-        let scanlines = (0..h + 1).map(|_| Scanline::empty()).collect();
+        let scanlines = Scanline::buffer(h);
         let score = -1.0;
         Worker { w, h, target, current, buffer, rng, scanlines, score }
     }
@@ -65,7 +60,7 @@ impl Worker {
         best_state
     }
 
-    pub fn hill_climb(&mut self, state: &mut State, max_age: u32) {
+    pub fn hill_climb(&mut self, state: &mut State, max_age: i32) {
         let mut undo = state.clone();
         let mut best_state = state.clone();
         let mut best_energy = best_state.energy(self);
@@ -80,6 +75,7 @@ impl Worker {
                 best_state.copy_from(state);
                 age -= 1;
             }
+            age += 1;
         }
         state.copy_from(&best_state);
     }

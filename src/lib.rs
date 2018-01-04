@@ -13,19 +13,54 @@ mod worker;
 
 pub use shape::ShapeType;
 
-use core::{Pixels, Color};
-use image::ImageFormat;
-use image::{Pixel, Rgba, RgbaImage};
 use model::Model;
-use std::fs::File;
-use scanline::Scanline;
-use shape::Shape;
-use worker::Worker;
 
 const SIZE: usize = 256;
+const AREA: usize = SIZE * SIZE;
 
 pub fn run(config: Config) {
     println!("{:?}", config);
+
+    let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
+    let img = util::scaled_to_area(img, AREA);
+    let mut model = Model::new(img, num_cpus::get());
+    for _ in 0..config.num_shapes {
+        model.step(config.shape_type, 128, 1000, 1);
+    }
+    model.save_rasterized(&config.out_path, config.out_size).expect("wtf");
+
+}
+
+#[derive(Debug)]
+pub struct Config {
+    pub in_path: String,
+    pub out_path: String,
+    pub num_shapes: u32,
+    pub shape_type: ShapeType,
+    pub out_size: u32,
+}
+
+//
+//struct A {}
+//
+//struct B<'a> {
+//    borrowed_a: &'a A,
+//}
+//
+//struct C<'a> {
+//    a: A,
+//    bs: Vec<B<'a>>,
+//}
+//
+//impl<'a> C<'a> {
+//    fn new<'b>() -> C<'b> {
+//        let mut c: C<'b> = C { a: A {}, bs: Vec::new() };
+//        let borrowed_a: &'b A = &c.a;
+//        let b = B { borrowed_a };
+//        c.bs.push(b);
+//        c
+//    }
+//}
 
 //    (0)
 //    let mut rng = rand::thread_rng();
@@ -107,44 +142,3 @@ pub fn run(config: Config) {
 //    let worker = Worker::new(&target);
 
 //    (7)
-    let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
-    let img = util::scaled_to_area(img, SIZE * SIZE);
-    let mut model = Model::new(img, num_cpus::get());
-    for _ in 0..config.num_shapes {
-        model.step(config.shape_type, 128, 1000, 1);
-    }
-    model.save_current(&config.out_path).expect("wtf");
-
-}
-
-#[derive(Debug)]
-pub struct Config {
-    pub in_path: String,
-    pub out_path: String,
-    pub num_shapes: u32,
-    pub shape_type: ShapeType,
-    pub out_size: u32,
-}
-
-//
-//struct A {}
-//
-//struct B<'a> {
-//    borrowed_a: &'a A,
-//}
-//
-//struct C<'a> {
-//    a: A,
-//    bs: Vec<B<'a>>,
-//}
-//
-//impl<'a> C<'a> {
-//    fn new<'b>() -> C<'b> {
-//        let mut c: C<'b> = C { a: A {}, bs: Vec::new() };
-//        let borrowed_a: &'b A = &c.a;
-//        let b = B { borrowed_a };
-//        c.bs.push(b);
-//        c
-//    }
-//}
-
