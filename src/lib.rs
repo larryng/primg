@@ -26,9 +26,10 @@ pub fn run(config: Config) {
 
     let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
     let img = util::scaled_to_area(img, AREA);
-    let mut model = Model::new(img, num_cpus::get(), config.out_size);
+    let cpus = num_cpus::get_physical();
+    let mut model = Model::new(img, cpus, config.out_size);
     for _ in 0..config.num_shapes {
-        model.step(config.shape_type, 128, 1000, 1);
+        model.step(config.shape_type, config.alpha, 1000, config.per_worker);
     }
     if config.out_path.ends_with(".svg") {
         let mut file = File::create(&config.out_path).unwrap();
@@ -46,6 +47,8 @@ pub struct Config {
     pub num_shapes: u32,
     pub shape_type: ShapeType,
     pub out_size: usize,
+    pub alpha: u8,
+    pub per_worker: u8,
 }
 
 //

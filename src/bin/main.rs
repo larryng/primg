@@ -23,6 +23,18 @@ fn main() {
             .long("output-size")
             .takes_value(true)
             .default_value("1024"))
+        .arg(Arg::with_name("alpha")
+            .help("Alpha (1-255)")
+            .short("a")
+            .long("alpha")
+            .takes_value(true)
+            .default_value("128"))
+        .arg(Arg::with_name("quality")
+            .help("Quality (1-4)")
+            .short("q")
+            .long("quality")
+            .takes_value(true)
+            .default_value("2"))
         .arg(Arg::with_name("INFILE")
             .help("Path to image file")
             .required(true))
@@ -39,6 +51,11 @@ fn main() {
         _ => panic!("invalid shape"),
     };
     let out_size = matches.value_of("output-size").unwrap().parse::<usize>().unwrap();
+    let alpha = matches.value_of("alpha").unwrap().parse::<u8>().unwrap();
+    let per_worker = matches.value_of("quality").unwrap().parse::<u8>().unwrap();
+
+    assert!(alpha > 0, "alpha must be between 1-255");
+    assert!(1 <= per_worker && per_worker <= 4, "quality must be between 1-4");
 
     let config = primg::Config {
         in_path,
@@ -46,6 +63,8 @@ fn main() {
         num_shapes,
         shape_type,
         out_size,
+        alpha,
+        per_worker,
     };
     primg::run(config);
 }
