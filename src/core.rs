@@ -185,6 +185,7 @@ impl Color {
         Pixel::from_channels(self.r(), self.g(), self.b(), self.a() )
     }
 
+    #[cfg(target_os="android")]
     pub fn to_argb_i32(&self) -> i32 {
         let a = self.0 & 0xff;
         ((a << 24) | (self.0 >> 8)) as i32

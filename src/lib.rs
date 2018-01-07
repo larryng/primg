@@ -13,15 +13,12 @@ mod worker;
 
 pub use shape::ShapeType;
 
-use std::io::{Write, Read};
+use std::io::Write;
 use std::fs::File;
-use std::fs;
 
 use model::Model;
-use core::Color;
 
 const SIZE: usize = 256;
-const AREA: usize = SIZE * SIZE;
 
 pub fn run(config: Config) {
     println!("{:?}", config);
