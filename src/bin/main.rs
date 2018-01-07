@@ -30,7 +30,7 @@ fn main() {
             .takes_value(true)
             .default_value("128"))
         .arg(Arg::with_name("quality")
-            .help("Quality (1-4)")
+            .help("Quality (1-3)")
             .short("q")
             .long("quality")
             .takes_value(true)
@@ -52,10 +52,15 @@ fn main() {
     };
     let out_size = matches.value_of("output-size").unwrap().parse::<usize>().unwrap();
     let alpha = matches.value_of("alpha").unwrap().parse::<u8>().unwrap();
-    let per_worker = matches.value_of("quality").unwrap().parse::<u8>().unwrap();
+    let m = matches.value_of("quality").unwrap().parse::<u8>().unwrap();
+    let m = match m {
+        1 => 1,
+        2 => 8,
+        3 => 16,
+        _ => panic!("quality must be between 1-3")
+    };
 
     assert!(alpha > 0, "alpha must be between 1-255");
-    assert!(1 <= per_worker && per_worker <= 4, "quality must be between 1-4");
 
     let config = primg::Config {
         in_path,
@@ -64,7 +69,7 @@ fn main() {
         shape_type,
         out_size,
         alpha,
-        per_worker,
+        m,
     };
     primg::run(config);
 }

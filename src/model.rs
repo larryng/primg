@@ -60,6 +60,7 @@ impl Model {
         let (tx, rx) = mpsc::channel();
 
         let score = self.score;
+        let m = cmp::max(1, m as usize / self.n_workers) as u8;
         for worker in &self.workers {
             let worker = worker.clone();
             let tx = tx.clone();

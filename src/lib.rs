@@ -30,7 +30,7 @@ pub fn run(config: Config) {
     let cpus = num_cpus::get_physical();
     let mut model = Model::new(img, cpus, config.out_size);
     for _ in 0..config.num_shapes {
-        model.step(config.shape_type, config.alpha, 1000, config.per_worker);
+        model.step(config.shape_type, config.alpha, 1000, config.m);
     }
     if config.out_path.ends_with(".svg") {
         let mut file = File::create(&config.out_path).unwrap();
@@ -49,7 +49,7 @@ pub struct Config {
     pub shape_type: ShapeType,
     pub out_size: usize,
     pub alpha: u8,
-    pub per_worker: u8,
+    pub m: u8,
 }
 
 #[cfg(target_os="android")]
@@ -67,7 +67,7 @@ pub mod android {
 
     #[no_mangle]
     pub unsafe extern fn Java_com_github_larryng_primitivewallpaper_jni_Primg_jniInit(
-        env: JNIEnv, _: JClass, img_path: JString, shape_type: jint, per_worker: jint) -> jobject {
+        env: JNIEnv, _: JClass, img_path: JString, shape_type: jint, m: jint) -> jobject {
 
         let in_path: String = env.get_string(img_path).expect("wtf").into();
         let out_path = String::from("");
@@ -75,10 +75,10 @@ pub mod android {
             0 => ShapeType::Triangle,
             _ => unreachable!(),
         };
-        let out_size = 256;
+        let out_size = 512;
         let alpha = 128;
-        let num_shapes = 1;
-        let per_worker = per_worker as u8;
+        let num_shapes = 42;
+        let m = m as u8;
         let config = Config {
             in_path,
             out_path,
@@ -86,7 +86,7 @@ pub mod android {
             shape_type,
             out_size,
             alpha,
-            per_worker
+            m
         };
 
         let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
@@ -96,11 +96,13 @@ pub mod android {
         let model = Model::new(img, cpus, config.out_size);
 
         let class = env.find_class("com/github/larryng/primitivewallpaper/jni/PrimgInitResult").expect("couldn't load class");
-        let constructor = env.get_method_id(class, "<init>", "(III)V").expect("couldn't get constructor");
+        let constructor = env.get_method_id(class, "<init>", "(Ljava/lang/Object;III)V").expect("couldn't get constructor");
+        let debug: String = format!("cpus: get={}, physical={}", num_cpus::get(), num_cpus::get_physical());
+        let debug = JValue::Object(env.new_string(debug).unwrap().into());
         let w = JValue::Int(model.w as i32);
         let h = JValue::Int(model.h as i32);
         let color = JValue::Int(model.bg.to_argb_i32());
-        let args = &[w, h, color];
+        let args = &[debug, w, h, color];
         let obj = env.new_object_by_id(class, constructor, &args[..]).expect("couldn't make PrimgInitResult").into_inner();
 
         MODEL_OPT = Some(model);
@@ -123,7 +125,7 @@ pub mod android {
             None => unreachable!(),
         };
 
-        let (shape, color) = model.step(config.shape_type, config.alpha, 1000, config.per_worker);
+        let (shape, color) = model.step(config.shape_type, config.alpha, 1000, config.m);
 
         let s = format!("{}:{}", shape.serialize(), color.to_argb_i32());
 
