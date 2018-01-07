@@ -13,10 +13,12 @@ mod worker;
 
 pub use shape::ShapeType;
 
-use std::io::Write;
+use std::io::{Write, Read};
 use std::fs::File;
+use std::fs;
 
 use model::Model;
+use core::Color;
 
 const SIZE: usize = 256;
 const AREA: usize = SIZE * SIZE;
@@ -49,6 +51,85 @@ pub struct Config {
     pub out_size: usize,
     pub alpha: u8,
     pub per_worker: u8,
+}
+
+#[cfg(target_os="android")]
+#[allow(non_snake_case)]
+pub mod android {
+    extern crate jni;
+
+    use super::*;
+    use self::jni::JNIEnv;
+    use self::jni::objects::{JClass, JString, JObject, JValue};
+    use self::jni::sys::{jstring, jint, jobject};
+
+    static mut CONFIG_OPT: Option<Config> = None;
+    static mut MODEL_OPT: Option<Model> = None;
+
+    #[no_mangle]
+    pub unsafe extern fn Java_com_github_larryng_primitivewallpaper_jni_Primg_jniInit(
+        env: JNIEnv, _: JClass, img_path: JString, shape_type: jint, per_worker: jint) -> jobject {
+
+        let in_path: String = env.get_string(img_path).expect("wtf").into();
+        let out_path = String::from("");
+        let shape_type = match shape_type {
+            0 => ShapeType::Triangle,
+            _ => unreachable!(),
+        };
+        let out_size = 256;
+        let alpha = 128;
+        let num_shapes = 1;
+        let per_worker = per_worker as u8;
+        let config = Config {
+            in_path,
+            out_path,
+            num_shapes,
+            shape_type,
+            out_size,
+            alpha,
+            per_worker
+        };
+
+        let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
+        let img = util::scaled_to_area(img, AREA);
+        let cpus = num_cpus::get_physical();
+
+        let model = Model::new(img, cpus, config.out_size);
+
+        let class = env.find_class("com/github/larryng/primitivewallpaper/jni/PrimgInitResult").expect("couldn't load class");
+        let constructor = env.get_method_id(class, "<init>", "(III)V").expect("couldn't get constructor");
+        let w = JValue::Int(model.sw as i32);
+        let h = JValue::Int(model.sh as i32);
+        let color = JValue::Int(model.bg.to_argb_i32());
+        let args = &[w, h, color];
+        let obj = env.new_object_by_id(class, constructor, &args[..]).expect("couldn't make PrimgInitResult").into_inner();
+
+        MODEL_OPT = Some(model);
+        CONFIG_OPT = Some(config);
+
+        obj
+    }
+
+    #[no_mangle]
+    pub unsafe extern fn Java_com_github_larryng_primitivewallpaper_jni_Primg_jniStep(
+        env: JNIEnv, _: JClass) -> jstring {
+
+        let config = match CONFIG_OPT {
+            Some(ref c) => c,
+            None => unreachable!(),
+        };
+
+        let model = match MODEL_OPT {
+            Some(ref mut m) => m,
+            None => unreachable!(),
+        };
+
+        let (shape, color) = model.step(config.shape_type, config.alpha, 1000, config.per_worker);
+
+        let s = format!("{}:{}", shape.serialize(), color.to_argb_i32());
+
+        env.new_string(s).unwrap().into_inner()
+    }
 }
 
 //

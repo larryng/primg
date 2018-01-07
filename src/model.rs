@@ -18,10 +18,10 @@ pub struct Model {
     n_workers: usize,
     w: usize,
     h: usize,
-    sw: usize,
-    sh: usize,
+    pub sw: usize,
+    pub sh: usize,
     scale: f64,
-    bg: Color,
+    pub bg: Color,
     target: Arc<Pixels>,
     current: Arc<RwLock<Pixels>>,
     score: f64,
@@ -56,7 +56,7 @@ impl Model {
         Model { n_workers, w, h, sw, sh, scale, bg, target, current, score, shapes, colors, workers, pool, scanlines }
     }
 
-    pub fn step(&mut self, t: ShapeType, a: u8, n: u32, m: u8) {
+    pub fn step(&mut self, t: ShapeType, a: u8, n: u32, m: u8) -> (Shape, Color) {
         let (tx, rx) = mpsc::channel();
 
         let score = self.score;
@@ -87,19 +87,20 @@ impl Model {
             }
         }
         println!("adding {:?}", best_state.shape);
-        self.add(best_state.shape, best_state.alpha);
+        self.add(best_state.shape, best_state.alpha)
     }
 
-    pub fn add(&mut self, shape: Shape, alpha: u8) {
+    pub fn add(&mut self, shape: Shape, alpha: u8) -> (Shape, Color) {
         let mut current = self.current.write().unwrap();
         let before = current.clone();
         let lines = &shape.rasterize(self.w, self.h, &mut self.scanlines);
         let color = current.compute_color(&self.target, lines, alpha);
         current.draw_lines(&color, &lines);
         let score = Pixels::difference_partial(&self.target, &before, &current, self.score, lines);
-        self.shapes.push(shape);
+        self.shapes.push(shape.clone());
         self.colors.push(color);
         self.score = score;
+        (shape, color)
     }
 
     pub fn svg(&self) -> String {

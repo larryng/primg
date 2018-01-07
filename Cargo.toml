@@ -9,3 +9,15 @@ image = "0.18.0"
 num_cpus = "1.7.0"
 rand = "0.4"
 threadpool = "1.7.1"
+
+[lib]
+name = "primg"
+path = "src/lib.rs"
+crate-type = ["dylib", "rlib"]
+
+[[bin]]
+name = "main"
+path = "src/bin/main.rs"
+
+[target.'cfg(target_os="android")'.dependencies]
+jni = { version = "~0.8.1", default-features = false }

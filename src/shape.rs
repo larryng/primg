@@ -66,6 +66,14 @@ impl Shape {
         }
     }
 
+    pub fn serialize(&self) -> String {
+        match *self {
+            Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
+                format!("0:{},{},{},{},{},{}", x1, y1, x2, y2, x3, y3)
+            }
+        }
+    }
+
 //    pub fn draw(&self, img: &mut RgbaImage, color: &Color, scale: f64, buf: &mut Vec<Scanline>) {
 //        match *self {
 //            Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {

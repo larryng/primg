@@ -1,6 +1,7 @@
 use super::SIZE;
 use image::{Pixel, Rgba, RgbaImage};
 use image::math::utils::clamp;
+use std::fmt;
 use std::marker::Sync;
 
 use scanline::Scanline;
@@ -168,6 +169,7 @@ impl Pixels {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Color(u32);
 
 impl Color {
@@ -181,6 +183,10 @@ impl Color {
 
     pub fn to_rgba(&self) -> Rgba<u8> {
         Pixel::from_channels(self.r(), self.g(), self.b(), self.a() )
+    }
+
+    pub fn to_argb_i32(&self) -> i32 {
+        ((self.a() as i32) << 24) | ((self.0 as i32) >> 8)
     }
 
     #[inline(always)]
@@ -201,5 +207,11 @@ impl Color {
     #[inline(always)]
     pub fn a(&self) -> u8 {
         (self.0 & 0xff) as u8
+    }
+}
+
+impl fmt::Display for Color {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
