@@ -186,7 +186,8 @@ impl Color {
     }
 
     pub fn to_argb_i32(&self) -> i32 {
-        ((self.a() as i32) << 24) | ((self.0 as i32) >> 8)
+        let a = self.0 & 0xff;
+        ((a << 24) | (self.0 >> 8)) as i32
     }
 
     #[inline(always)]

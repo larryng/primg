@@ -27,7 +27,6 @@ pub fn run(config: Config) {
     println!("{:?}", config);
 
     let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
-    let img = util::scaled_to_area(img, AREA);
     let cpus = num_cpus::get_physical();
     let mut model = Model::new(img, cpus, config.out_size);
     for _ in 0..config.num_shapes {
@@ -98,8 +97,8 @@ pub mod android {
 
         let class = env.find_class("com/github/larryng/primitivewallpaper/jni/PrimgInitResult").expect("couldn't load class");
         let constructor = env.get_method_id(class, "<init>", "(III)V").expect("couldn't get constructor");
-        let w = JValue::Int(model.sw as i32);
-        let h = JValue::Int(model.sh as i32);
+        let w = JValue::Int(model.w as i32);
+        let h = JValue::Int(model.h as i32);
         let color = JValue::Int(model.bg.to_argb_i32());
         let args = &[w, h, color];
         let obj = env.new_object_by_id(class, constructor, &args[..]).expect("couldn't make PrimgInitResult").into_inner();

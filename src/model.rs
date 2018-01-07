@@ -16,8 +16,8 @@ use worker::Worker;
 
 pub struct Model {
     n_workers: usize,
-    w: usize,
-    h: usize,
+    pub w: usize,
+    pub h: usize,
     pub sw: usize,
     pub sh: usize,
     scale: f64,
