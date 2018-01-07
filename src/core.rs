@@ -114,7 +114,7 @@ impl Pixels {
         util::draw_lines(&mut self.buf, self.w, self.h, a, lines);
     }
 
-    pub fn difference_full(a: &Pixels, b: &Pixels) -> f64 {
+    pub fn difference_full(a: &Pixels, b: &Pixels) -> f32 {
         let w = a.w;
         let h = a.h;
         let mut total = 0i64;
@@ -130,17 +130,17 @@ impl Pixels {
                 total += (dr * dr) + (dg * dg) + (db * db) + (da * da);
             }
         }
-        (total as f64 / (w * h * 4) as f64).sqrt() / 255.0
+        (total as f32 / (w * h * 4) as f32).sqrt() / 255.0
     }
 
     pub fn difference_partial(target: &Pixels,
                               before: &Pixels,
                               after: &Pixels,
-                              score: f64,
-                              lines: &[Scanline]) -> f64 {
+                              score: f32,
+                              lines: &[Scanline]) -> f32 {
         let w = target.w;
         let h = target.h;
-        let mut total = ((score * 255.0).powi(2) * (w * h * 4) as f64) as i64;
+        let mut total = ((score * 255.0).powi(2) * (w * h * 4) as f32) as i64;
         for line in lines {
             for x in line.x1..line.x2 + 1 {
                 let pt = target.get(x, line.y);
@@ -161,7 +161,7 @@ impl Pixels {
                 total += ((dr2 * dr2) + (dg2 * dg2) + (db2 * db2) + (da2 * da2)) as i64;
             }
         }
-        (total as f64 / (w * h * 4) as f64).sqrt() / 255.0
+        (total as f32 / (w * h * 4) as f32).sqrt() / 255.0
     }
 
     fn index(&self, x: usize, y: usize) -> usize {

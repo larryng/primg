@@ -5,7 +5,7 @@ use image::GenericImage;
 use rand::Rand;
 use rand::StdRng;
 use rand::distributions::normal::StandardNormal;
-use std::f64::consts::PI;
+use std::f32::consts::PI;
 
 use core::Color;
 use scanline::Scanline;
@@ -14,8 +14,8 @@ pub fn load_image(filepath: &str) -> ImageResult<DynamicImage> {
     image::open(filepath)
 }
 
-pub fn scale_dimen(a: i32, scale: f64) -> i32 {
-    (a as f64 * scale).round() as i32
+pub fn scale_dimen(a: i32, scale: f32) -> i32 {
+    (a as f32 * scale).round() as i32
 }
 
 pub fn scaled_to_area(img: DynamicImage, area: usize) -> DynamicImage {
@@ -24,16 +24,16 @@ pub fn scaled_to_area(img: DynamicImage, area: usize) -> DynamicImage {
     if w * h < area as u32 {
         img
     } else {
-        let x = ((area as f64) / (w * h) as f64).sqrt();
-        img.resize((x * w as f64) as u32, (x * h as f64) as u32, FilterType::Nearest)
+        let x = ((area as f32) / (w * h) as f32).sqrt();
+        img.resize((x * w as f32) as u32, (x * h as f32) as u32, FilterType::Nearest)
     }
 }
 
-pub fn rng_normal(rng: &mut StdRng) -> f64 {
-    StandardNormal::rand(rng).0
+pub fn rng_normal(rng: &mut StdRng) -> f32 {
+    StandardNormal::rand(rng).0 as f32
 }
 
-pub fn degrees(radians: f64) -> f64 {
+pub fn degrees(radians: f32) -> f32 {
     radians * 180.0 / PI
 }
 

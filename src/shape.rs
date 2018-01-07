@@ -51,7 +51,7 @@ impl Shape {
         }
     }
 
-    pub fn scaled(&self, scale: f64) -> Shape {
+    pub fn scaled(&self, scale: f32) -> Shape {
         match *self {
             Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
                 Shape::Triangle {
@@ -74,13 +74,13 @@ impl Shape {
         }
     }
 
-//    pub fn draw(&self, img: &mut RgbaImage, color: &Color, scale: f64, buf: &mut Vec<Scanline>) {
+//    pub fn draw(&self, img: &mut RgbaImage, color: &Color, scale: f32, buf: &mut Vec<Scanline>) {
 //        match *self {
 //            Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
 //                let poly = &[
-//                    Point::new((x1 as f64 * scale) as i32, (y1 as f64 * scale) as i32),
-//                    Point::new((x2 as f64 * scale) as i32, (y2 as f64 * scale) as i32),
-//                    Point::new((x3 as f64 * scale) as i32, (y3 as f64 * scale) as i32),
+//                    Point::new((x1 as f32 * scale) as i32, (y1 as f32 * scale) as i32),
+//                    Point::new((x2 as f32 * scale) as i32, (y2 as f32 * scale) as i32),
+//                    Point::new((x3 as f32 * scale) as i32, (y3 as f32 * scale) as i32),
 //                ];
 //                let color = color.to_rgba();
 //                println!("drawing {:?}, {:?}", self, color);
@@ -136,15 +136,15 @@ fn mutate_triangle(w: usize, h: usize, rng: &mut StdRng,
 }
 
 fn is_valid_triangle(tx1: &i32, ty1: &i32, tx2: &i32, ty2: &i32, tx3: &i32, ty3: &i32) -> bool {
-    const MIN_DEGREES: f64 = 15.0;
-    let a1: f64;
-    let a2: f64;
-    let a3: f64;
+    const MIN_DEGREES: f32 = 15.0;
+    let a1: f32;
+    let a2: f32;
+    let a3: f32;
     {
-        let mut x1 = (*tx2 - *tx1) as f64;
-        let mut y1 = (*ty2 - *ty1) as f64;
-        let mut x2 = (*tx3 - *tx1) as f64;
-        let mut y2 = (*ty3 - *ty1) as f64;
+        let mut x1 = (*tx2 - *tx1) as f32;
+        let mut y1 = (*ty2 - *ty1) as f32;
+        let mut x2 = (*tx3 - *tx1) as f32;
+        let mut y2 = (*ty3 - *ty1) as f32;
         let d1 = (x1 * x1 + y1 * y1).sqrt();
         let d2 = (x2 * x2 + y2 * y2).sqrt();
         x1 /= d1;
@@ -154,10 +154,10 @@ fn is_valid_triangle(tx1: &i32, ty1: &i32, tx2: &i32, ty2: &i32, tx3: &i32, ty3:
         a1 = degrees((x1 * x2 + y1 * y2).acos());
     }
     {
-        let mut x1 = (*tx1 - *tx2) as f64;
-        let mut y1 = (*ty1 - *ty2) as f64;
-        let mut x2 = (*tx3 - *tx2) as f64;
-        let mut y2 = (*ty3 - *ty2) as f64;
+        let mut x1 = (*tx1 - *tx2) as f32;
+        let mut y1 = (*ty1 - *ty2) as f32;
+        let mut x2 = (*tx3 - *tx2) as f32;
+        let mut y2 = (*ty3 - *ty2) as f32;
         let d1 = (x1 * x1 + y1 * y1).sqrt();
         let d2 = (x2 * x2 + y2 * y2).sqrt();
         x1 /= d1;
@@ -194,7 +194,7 @@ fn rasterize_triangle<'a>(w: usize, h: usize,
         let count = rasterize_triangle_top(w, h, x1, y1, x2, y2, x3, y3, &mut buf, 0);
         &buf[0..count]
     } else {
-        let x4 = x1 + (((y2 - y1) as f64 / (y3 - y1) as f64) * (x3 - x1) as f64) as i32;
+        let x4 = x1 + (((y2 - y1) as f32 / (y3 - y1) as f32) * (x3 - x1) as f32) as i32;
         let y4 = y2;
         let first = rasterize_triangle_bottom(w, h, x1, y1, x2, y2, x4, y4, &mut buf, 0);
         let last = rasterize_triangle_top(w, h, x2, y2, x4, y4, x3, y3, &mut buf, first);
@@ -208,10 +208,10 @@ fn rasterize_triangle_bottom(w: usize, h: usize,
                              x3: i32, y3: i32,
                              buf: &mut Vec<Scanline>,
                              offset: usize) -> usize {
-    let s1 = (x2 - x1) as f64 / (y2 - y1) as f64;
-    let s2 = (x3 - x1) as f64 / (y3 - y1) as f64;
-    let mut ax = x1 as f64;
-    let mut bx = x1 as f64;
+    let s1 = (x2 - x1) as f32 / (y2 - y1) as f32;
+    let s2 = (x3 - x1) as f32 / (y3 - y1) as f32;
+    let mut ax = x1 as f32;
+    let mut bx = x1 as f32;
     let mut count = 0usize;
     let mut y = y1;
     while y < y2 + 1 {
@@ -237,10 +237,10 @@ fn rasterize_triangle_top<'a>(w: usize, h: usize,
                               x3: i32, y3: i32,
                               buf: &'a mut Vec<Scanline>,
                               offset: usize) -> usize {
-    let s1 = (x3 - x1) as f64 / (y3 - y1) as f64;
-    let s2 = (x3 - x2) as f64 / (y3 - y2) as f64;
-    let mut ax = x3 as f64;
-    let mut bx = x3 as f64;
+    let s1 = (x3 - x1) as f32 / (y3 - y1) as f32;
+    let s2 = (x3 - x2) as f32 / (y3 - y2) as f32;
+    let mut ax = x3 as f32;
+    let mut bx = x3 as f32;
     let mut count = 0usize;
     let mut y = y3;
     while y > y1 {

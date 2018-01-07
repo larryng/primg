@@ -14,7 +14,7 @@ pub struct Worker {
     pub buffer: Pixels,
     pub rng: rand::StdRng,
     pub scanlines: Vec<Scanline>,
-    pub score: f64,
+    pub score: f32,
 }
 
 unsafe impl Sync for Worker {}
@@ -30,11 +30,11 @@ impl Worker {
         Worker { w, h, target, current, buffer, rng, scanlines, score }
     }
 
-    pub fn init(&mut self, score: f64) {
+    pub fn init(&mut self, score: f32) {
         self.score = score;
     }
 
-    pub fn energy(&mut self, shape: &Shape, alpha: u8) -> f64 {
+    pub fn energy(&mut self, shape: &Shape, alpha: u8) -> f32 {
         let lines = shape.rasterize(self.w, self.h, &mut self.scanlines);
         let current = self.current.read().unwrap();
         let color = current.compute_color(self.target.as_ref(), lines, alpha);

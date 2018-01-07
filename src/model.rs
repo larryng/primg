@@ -20,11 +20,11 @@ pub struct Model {
     pub h: usize,
     pub sw: usize,
     pub sh: usize,
-    scale: f64,
+    scale: f32,
     pub bg: Color,
     target: Arc<Pixels>,
     current: Arc<RwLock<Pixels>>,
-    score: f64,
+    score: f32,
     shapes: Vec<Shape>,
     colors: Vec<Color>,
     workers: Vec<Arc<RwLock<Worker>>>,
@@ -39,7 +39,7 @@ impl Model {
         let w = target.w;
         let h = target.h;
         let bigger = cmp::max(w, h);
-        let scale = out_size as f64 / bigger as f64;
+        let scale = out_size as f32 / bigger as f32;
         let sw = util::scale_dimen(w as i32, scale) as usize;
         let sh = util::scale_dimen(h as i32, scale) as usize;
         let bg = target.average_color();
@@ -115,7 +115,7 @@ impl Model {
         for (i, shape) in self.shapes.iter().enumerate() {
             let c = &self.colors[i];
             let attrs = format!("fill=\"#{:02x}{:02x}{:02x}\" fill-opacity=\"{}\"",
-                                c.r(), c.g(), c.b(), c.a() as f64 / 255.0);
+                                c.r(), c.g(), c.b(), c.a() as f32 / 255.0);
             lines.push(shape.svg(&attrs));
         }
 

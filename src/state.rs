@@ -5,7 +5,7 @@ use worker::Worker;
 pub struct State {
     pub shape: Shape,
     pub alpha: u8,
-    pub score: f64,
+    pub score: f32,
 }
 
 impl State {
@@ -13,7 +13,7 @@ impl State {
         State { shape, alpha, score: -1.0 }
     }
 
-    pub fn energy(&mut self, worker: &mut Worker) -> f64 {
+    pub fn energy(&mut self, worker: &mut Worker) -> f32 {
         if self.score < 0.0 {
             self.score = worker.energy(&self.shape, self.alpha);
         }
