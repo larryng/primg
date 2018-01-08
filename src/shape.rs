@@ -218,7 +218,7 @@ fn mutate_ellipse(w: usize, h: usize, rng: &mut StdRng,
             *rx = clamp(*rx + (rng_normal(rng) * 16.0) as i32, 0, w - 1);
         }
         _ => {
-            *rx = clamp(*rx + (rng_normal(rng) * 16.0) as i32, 0, h - 1);
+            *ry = clamp(*ry + (rng_normal(rng) * 16.0) as i32, 0, h - 1);
         }
     }
 }
