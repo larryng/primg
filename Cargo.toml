@@ -21,3 +21,6 @@ path = "src/bin/main.rs"
 
 [target.'cfg(target_os="android")'.dependencies]
 jni = { version = "~0.8.1", default-features = false }
+
+#[profile.release]
+#debug = true

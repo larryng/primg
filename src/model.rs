@@ -87,7 +87,7 @@ impl Model {
                 break;
             }
         }
-        println!("adding {:?}", best_state.shape);
+//        println!("adding {:?}", best_state.shape);
         self.add(best_state.shape, best_state.alpha)
     }
 
@@ -142,7 +142,7 @@ impl Model {
         let w = self.sw;
         let h = self.sh;
         let scale = self.scale;
-        println!("w={}, h={}, scale={}", w, h, scale);
+//        println!("w={}, h={}, scale={}", w, h, scale);
         let mut img = vec![0; w * h * 4];
         util::erase(&mut img, &self.bg);
         let mut buf = Scanline::buffer(h);

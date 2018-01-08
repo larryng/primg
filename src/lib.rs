@@ -21,7 +21,7 @@ use model::Model;
 const SIZE: usize = 256;
 
 pub fn run(config: Config) {
-    println!("{:?}", config);
+//    println!("{:?}", config);
 
     let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
     let cpus = num_cpus::get_physical();
@@ -56,7 +56,7 @@ pub mod android {
 
     use super::*;
     use self::jni::JNIEnv;
-    use self::jni::objects::{JClass, JString, JObject, JValue};
+    use self::jni::objects::{JClass, JString, JValue};
     use self::jni::sys::{jstring, jint, jobject};
 
     static mut CONFIG_OPT: Option<Config> = None;
@@ -87,7 +87,7 @@ pub mod android {
         };
 
         let img = util::load_image(config.in_path.as_ref()).expect("couldn't load image");
-        let img = util::scaled_to_area(img, AREA);
+        let img = util::scaled_to_area(img, SIZE * SIZE);
         let cpus = num_cpus::get_physical();
 
         let model = Model::new(img, cpus, config.out_size);

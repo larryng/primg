@@ -42,18 +42,28 @@ pub fn draw_lines(buf: &mut [u8], w: usize, h: usize, a: &Color, lines: &[Scanli
     let ar = a.r() as u32 * aa;
     let ag = a.g() as u32 * aa;
     let ab = a.b() as u32 * aa;
-    for line in lines {
-        for x in line.x1..(line.x2 + 1) {
-            let i = 4 * (line.y * w + x);
-            let ba = buf[i + 3] as u32;
-            let br = buf[i] as u32 * ba;
-            let bg = buf[i + 1] as u32 * ba;
-            let bb = buf[i + 2] as u32 * ba;
-            let diff = 255 - aa;
-            buf[i] = ((ar + br * diff / 255) >> 8) as u8;
-            buf[i + 1] = ((ag + bg * diff / 255) >> 8) as u8;
-            buf[i + 2] = ((ab + bb * diff / 255) >> 8) as u8;
-            buf[i + 3] = (aa + ba * diff / 255) as u8;
+    unsafe {
+        for line in lines {
+            let mut i = 4 * (line.y * w + line.x1) as isize;
+            for _ in line.x1..(line.x2 + 1) {
+                let p = buf.as_mut_ptr();
+                let p0 = p.offset(i + 0);
+                let p1 = p.offset(i + 1);
+                let p2 = p.offset(i + 2);
+                let p3 = p.offset(i + 3);
+
+                let ba = *p3 as u32;
+                let br = *p0 as u32 * ba;
+                let bg = *p1 as u32 * ba;
+                let bb = *p2 as u32 * ba;
+                let diff = 255 - aa;
+                *p0 = ((ar + br * diff / 255) >> 8) as u8;
+                *p1 = ((ag + bg * diff / 255) >> 8) as u8;
+                *p2 = ((ab + bb * diff / 255) >> 8) as u8;
+                *p3 = (aa + ba * diff / 255) as u8;
+
+                i += 4;
+            }
         }
     }
 }
