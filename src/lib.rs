@@ -70,6 +70,7 @@ pub mod android {
         let out_path = String::from("");
         let shape_type = match shape_type {
             0 => ShapeType::Triangle,
+            1 => ShapeType::Ellipse,
             _ => unreachable!(),
         };
         let out_size = 512;

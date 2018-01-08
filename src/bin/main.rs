@@ -6,7 +6,7 @@ use clap::{Arg, App};
 fn main() {
     let matches = App::new("primg")
         .arg(Arg::with_name("shape")
-            .help("Shape type")
+            .help("Shape type (triangle, ellipse)")
             .short("t")
             .long("shape")
             .takes_value(true)
@@ -48,6 +48,7 @@ fn main() {
     let num_shapes = matches.value_of("num-shapes").unwrap().parse::<u32>().unwrap();
     let shape_type = match matches.value_of("shape").unwrap().to_lowercase().as_ref() {
         "triangle" => primg::ShapeType::Triangle,
+        "ellipse" => primg::ShapeType::Ellipse,
         _ => panic!("invalid shape"),
     };
     let out_size = matches.value_of("output-size").unwrap().parse::<usize>().unwrap();

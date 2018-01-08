@@ -10,17 +10,20 @@ use util::{degrees, rng_normal, scale_dimen};
 #[derive(Debug, Copy, Clone)]
 pub enum ShapeType {
     Triangle,
+    Ellipse,
 }
 
 #[derive(Debug, Clone)]
 pub enum Shape {
     Triangle { x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32 },
+    Ellipse { x: i32, y: i32, rx: i32, ry: i32 },
 }
 
 impl Shape {
     pub fn random(t: ShapeType, w: usize, h: usize, rng: &mut StdRng) -> Shape {
         match t {
-            ShapeType::Triangle => random_triangle(w, h, rng)
+            ShapeType::Triangle => random_triangle(w, h, rng),
+            ShapeType::Ellipse => random_ellipse(w, h, rng),
         }
     }
 
@@ -31,6 +34,10 @@ impl Shape {
                 ref mut x2, ref mut y2,
                 ref mut x3, ref mut y3,
             } => mutate_triangle(w, h, rng, x1, y1, x2, y2, x3, y3),
+            Shape::Ellipse {
+                ref mut x, ref mut y,
+                ref mut rx, ref mut ry,
+            } => mutate_ellipse(w, h, rng, x, y, rx, ry),
         }
     }
 
@@ -38,7 +45,10 @@ impl Shape {
         match *self {
             Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
                 rasterize_triangle(w, h, x1, y1, x2, y2, x3, y3, buf)
-            },
+            }
+            Shape::Ellipse { x, y, rx, ry } => {
+                rasterize_ellipse(w, h, x, y, rx, ry, buf)
+            }
         }
     }
 
@@ -47,7 +57,11 @@ impl Shape {
             Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
                 format!("<polygon {} points=\"{},{} {},{} {},{}\" />",
                         attrs, x1, y1, x2, y2, x3, y3)
-            },
+            }
+            Shape::Ellipse { x, y, rx, ry } => {
+                format!("<ellipse {} cx=\"{}\" cy=\"{}\" rx=\"{}\" ry=\"{}\" />",
+                        attrs, x, y, rx, ry)
+            }
         }
     }
 
@@ -62,15 +76,26 @@ impl Shape {
                     x3: scale_dimen(x3, scale),
                     y3: scale_dimen(y3, scale),
                 }
-            },
+            }
+            Shape::Ellipse { x, y, rx, ry } => {
+                Shape::Ellipse {
+                    x: scale_dimen(x, scale),
+                    y: scale_dimen(y, scale),
+                    rx: scale_dimen(rx, scale),
+                    ry: scale_dimen(ry, scale),
+                }
+            }
         }
     }
 
-    #[cfg(target_os="android")]
+    #[cfg(target_os = "android")]
     pub fn serialize(&self) -> String {
         match *self {
             Shape::Triangle { x1, y1, x2, y2, x3, y3 } => {
                 format!("0:{},{},{},{},{},{}", x1, y1, x2, y2, x3, y3)
+            }
+            Shape::Ellipse { x, y, rx, ry } => {
+                format!("1:{},{},{},{}", x, y, rx, ry)
             }
         }
     }
@@ -100,6 +125,14 @@ fn random_triangle(w: usize, h: usize, rng: &mut StdRng) -> Shape {
     let mut y3 = y1 + rng.gen_range(0, 31) - 15;
     mutate_triangle(w, h, rng, &mut x1, &mut y1, &mut x2, &mut y2, &mut x3, &mut y3);
     Shape::Triangle { x1, y1, x2, y2, x3, y3 }
+}
+
+fn random_ellipse(w: usize, h: usize, rng: &mut StdRng) -> Shape {
+    let x = rng.gen_range(0, w as i32);
+    let y = rng.gen_range(0, h as i32);
+    let rx = rng.gen_range(0, 32) + 1;
+    let ry = rng.gen_range(0, 32) + 1;
+    Shape::Ellipse { x, y, rx, ry }
 }
 
 fn mutate_triangle(w: usize, h: usize, rng: &mut StdRng,
@@ -169,6 +202,25 @@ fn is_valid_triangle(tx1: &i32, ty1: &i32, tx2: &i32, ty2: &i32, tx3: &i32, ty3:
     }
     a3 = 180.0 - a1 - a2;
     a1 > MIN_DEGREES && a2 > MIN_DEGREES && a3 > MIN_DEGREES
+}
+
+fn mutate_ellipse(w: usize, h: usize, rng: &mut StdRng,
+                  x: &mut i32, y: &mut i32,
+                  rx: &mut i32, ry: &mut i32) {
+    let w = w as i32;
+    let h = h as i32;
+    match rng.gen_range(0, 3) {
+        0 => {
+            *x = clamp(*x + (rng_normal(rng) * 16.0) as i32, 0, w - 1);
+            *y = clamp(*y + (rng_normal(rng) * 16.0) as i32, 0, h - 1);
+        }
+        1 => {
+            *rx = clamp(*rx + (rng_normal(rng) * 16.0) as i32, 0, w - 1);
+        }
+        _ => {
+            *rx = clamp(*rx + (rng_normal(rng) * 16.0) as i32, 0, h - 1);
+        }
+    }
 }
 
 fn rasterize_triangle<'a>(w: usize, h: usize,
@@ -259,4 +311,45 @@ fn rasterize_triangle_top<'a>(w: usize, h: usize,
         y -= 1;
     }
     return count;
+}
+
+fn rasterize_ellipse<'a>(w: usize, h: usize,
+                         x: i32, y: i32,
+                         rx: i32, ry: i32,
+                         buf: &'a mut Vec<Scanline>) -> &'a [Scanline] {
+    let w = w as i32;
+    let h = h as i32;
+    let aspect = rx as f32 / ry as f32;
+    let mut count = 0;
+    for dy in 0..ry {
+        let y1 = y - dy;
+        let y2 = y + dy;
+        if (y1 < 0 || y1 > h) && (y2 < 0 || y2 >= h) {
+            continue;
+        }
+        let s = (((ry * ry - dy * dy) as f32).sqrt() * aspect) as i32;
+        let mut x1 = x - s;
+        let mut x2 = x + s;
+        if x1 < 0 {
+            x1 = 0;
+        }
+        if x2 >= w {
+            x2 = w - 1;
+        }
+        if y1 >= 0 && y1 < h {
+            let line = &mut buf[count];
+            line.y = y1 as usize;
+            line.x1 = x1 as usize;
+            line.x2 = x2 as usize;
+            count += 1;
+        }
+        if y2 >= 0 && y2 < h && dy > 0 {
+            let line = &mut buf[count];
+            line.y = y2 as usize;
+            line.x1 = x1 as usize;
+            line.x2 = x2 as usize;
+            count += 1;
+        }
+    }
+    &buf[0..count]
 }
