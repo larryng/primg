@@ -49,6 +49,7 @@ fn main() {
     let shape_type = match matches.value_of("shape").unwrap().to_lowercase().as_ref() {
         "triangle" => primg::ShapeType::Triangle,
         "ellipse" => primg::ShapeType::Ellipse,
+        "rectangle" => primg::ShapeType::Rectangle,
         _ => panic!("invalid shape"),
     };
     let out_size = matches.value_of("output-size").unwrap().parse::<usize>().unwrap();

@@ -11,12 +11,14 @@ use util::{degrees, rng_normal, scale_dimen};
 pub enum ShapeType {
     Triangle,
     Ellipse,
+    Rectangle,
 }
 
 #[derive(Debug, Clone)]
 pub enum Shape {
     Triangle { x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32 },
     Ellipse { x: i32, y: i32, rx: i32, ry: i32 },
+    Rectangle { x1: i32, y1: i32, x2: i32, y2: i32 },
 }
 
 impl Shape {
@@ -24,6 +26,7 @@ impl Shape {
         match t {
             ShapeType::Triangle => random_triangle(w, h, rng),
             ShapeType::Ellipse => random_ellipse(w, h, rng),
+            ShapeType::Rectangle => random_rectangle(w, h, rng),
         }
     }
 
@@ -38,6 +41,10 @@ impl Shape {
                 ref mut x, ref mut y,
                 ref mut rx, ref mut ry,
             } => mutate_ellipse(w, h, rng, x, y, rx, ry),
+            Shape::Rectangle {
+                ref mut x1, ref mut y1,
+                ref mut x2, ref mut y2,
+            } => mutate_rectangle(w, h, rng, x1, y1, x2, y2),
         }
     }
 
@@ -48,6 +55,9 @@ impl Shape {
             }
             Shape::Ellipse { x, y, rx, ry } => {
                 rasterize_ellipse(w, h, x, y, rx, ry, buf)
+            }
+            Shape::Rectangle { x1, y1, x2, y2 } => {
+                rasterize_rectangle(x1, y1, x2, y2, buf)
             }
         }
     }
@@ -61,6 +71,12 @@ impl Shape {
             Shape::Ellipse { x, y, rx, ry } => {
                 format!("<ellipse {} cx=\"{}\" cy=\"{}\" rx=\"{}\" ry=\"{}\" />",
                         attrs, x, y, rx, ry)
+            }
+            Shape::Rectangle { x1, y1, x2, y2 } => {
+                let w = x2 - x1 + 1;
+                let h = y2 - y1 + 1;
+                format!("<rect {} x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" />",
+                        attrs, x1, y1, w, h)
             }
         }
     }
@@ -85,6 +101,14 @@ impl Shape {
                     ry: scale_dimen(ry, scale),
                 }
             }
+            Shape::Rectangle { x1, y1, x2, y2 } => {
+                Shape::Rectangle {
+                    x1: scale_dimen(x1, scale),
+                    y1: scale_dimen(y1, scale),
+                    x2: scale_dimen(x2, scale),
+                    y2: scale_dimen(y2, scale),
+                }
+            }
         }
     }
 
@@ -96,6 +120,9 @@ impl Shape {
             }
             Shape::Ellipse { x, y, rx, ry } => {
                 format!("1:{},{},{},{}", x, y, rx, ry)
+            }
+            Shape::Rectangle { x1, y1, x2, y2 } => {
+                format!("2:{},{},{},{}", x1, y1, x2, y2)
             }
         }
     }
@@ -133,6 +160,14 @@ fn random_ellipse(w: usize, h: usize, rng: &mut StdRng) -> Shape {
     let rx = rng.gen_range(0, 32) + 1;
     let ry = rng.gen_range(0, 32) + 1;
     Shape::Ellipse { x, y, rx, ry }
+}
+
+fn random_rectangle(w: usize, h: usize, rng: &mut StdRng) -> Shape {
+    let x1 = rng.gen_range(0, w as i32);
+    let y1 = rng.gen_range(0, h as i32);
+    let x2 = clamp(x1 + rng.gen_range(0, 32) + 1, 0, w as i32 - 1);
+    let y2 = clamp(y1 + rng.gen_range(0, 32) + 1, 0, h as i32 - 1);
+    Shape::Rectangle { x1, y1, x2, y2 }
 }
 
 fn mutate_triangle(w: usize, h: usize, rng: &mut StdRng,
@@ -220,6 +255,29 @@ fn mutate_ellipse(w: usize, h: usize, rng: &mut StdRng,
         _ => {
             *ry = clamp(*ry + (rng_normal(rng) * 16.0) as i32, 0, h - 1);
         }
+    }
+}
+
+fn mutate_rectangle(w: usize, h: usize, rng: &mut StdRng,
+                    x1: &mut i32, y1: &mut i32,
+                    x2: &mut i32, y2: &mut i32) {
+    let w = w as i32;
+    let h = h as i32;
+    match rng.gen_range(0, 2) {
+        0 => {
+            *x1 = clamp(*x1 + (rng_normal(rng) * 16.0) as i32, 0, w - 1);
+            *y1 = clamp(*y1 + (rng_normal(rng) * 16.0) as i32, 0, h - 1);
+        }
+        _ => {
+            *x2 = clamp(*x1 + (rng_normal(rng) * 16.0) as i32, 0, w - 1);
+            *y2 = clamp(*y1 + (rng_normal(rng) * 16.0) as i32, 0, h - 1);
+        }
+    }
+    if *x1 > *x2 {
+        swap(x1, x2);
+    }
+    if *y1 > *y2 {
+        swap(y1, y2);
     }
 }
 
@@ -352,4 +410,16 @@ fn rasterize_ellipse<'a>(w: usize, h: usize,
         }
     }
     &buf[0..count]
+}
+
+fn rasterize_rectangle<'a>(x1: i32, y1: i32,
+                           x2: i32, y2: i32,
+                           buf: &'a mut Vec<Scanline>) -> &'a [Scanline] {
+    for y in y1..y2 + 1 {
+        let line = &mut buf[(y - y1) as usize];
+        line.y = y as usize;
+        line.x1 = x1 as usize;
+        line.x2 = x2 as usize;
+    }
+    &buf[0..(y2 - y1) as usize]
 }
