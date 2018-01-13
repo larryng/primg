@@ -71,6 +71,7 @@ pub mod android {
         let shape_type = match shape_type {
             0 => ShapeType::Triangle,
             1 => ShapeType::Ellipse,
+            2 => ShapeType::Rectangle,
             _ => unreachable!(),
         };
         let out_size = 512;
