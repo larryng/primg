@@ -23,7 +23,7 @@ pub struct Model {
     scale: f32,
     pub bg: Color,
     target: Arc<Pixels>,
-    pub current: Arc<RwLock<Pixels>>,
+    current: Arc<RwLock<Pixels>>,
     score: f32,
     shapes: Vec<Shape>,
     colors: Vec<Color>,
