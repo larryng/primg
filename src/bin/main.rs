@@ -50,6 +50,7 @@ fn main() {
         "triangle" => primg::ShapeType::Triangle,
         "ellipse" => primg::ShapeType::Ellipse,
         "rectangle" => primg::ShapeType::Rectangle,
+        "rotated-rectangle" => primg::ShapeType::RotatedRectangle,
         _ => panic!("invalid shape"),
     };
     let out_size = matches.value_of("output-size").unwrap().parse::<usize>().unwrap();

@@ -79,3 +79,11 @@ pub fn erase(buf: &mut [u8], color: &Color) {
         i += 4;
     }
 }
+
+pub fn rotate(x: f32, y: f32, theta: f32) -> (f32, f32) {
+    let cos = theta.cos();
+    let sin = theta.sin();
+    let rx = x * cos - y * sin;
+    let ry = x * sin + y * cos;
+    (rx, ry)
+}

@@ -35,7 +35,6 @@ pub fn run(config: Config) {
     } else {
         model.save_rasterized(&config.out_path).expect("wtf");
     }
-
 }
 
 #[derive(Debug)]
@@ -72,6 +71,7 @@ pub mod android {
             0 => ShapeType::Triangle,
             1 => ShapeType::Ellipse,
             2 => ShapeType::Rectangle,
+            3 => ShapeType::RotatedRectangle,
             _ => unreachable!(),
         };
         let out_size = 512;

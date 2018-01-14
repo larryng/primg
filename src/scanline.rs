@@ -16,9 +16,7 @@ impl Scanline {
         (0..h + 1).map(|_| Scanline::empty()).collect()
     }
 
-    pub fn validating_set(&mut self, w: usize, h: usize, y: i32, x1: i32, x2: i32) -> bool {
-        let w = w as i32;
-        let h = h as i32;
+    pub fn validating_set(&mut self, w: i32, h: i32, y: i32, x1: i32, x2: i32) -> bool {
         if (y < 0 || y >= h) || x1 >= w || x2 < 0 {
             return false;
         } else {
