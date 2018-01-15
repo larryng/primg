@@ -332,7 +332,7 @@ fn mutate_rotated_rectangle(w: i32, h: i32, rng: &mut StdRng,
             *sy = clamp(*sy + (rng_normal(rng) * 16.0) as i32, 1, h - 1);
         }
         _ => {
-            *angle = *angle + (rng_normal(rng) * 32.0) as i32;
+            *angle = (*angle + (rng_normal(rng) * 32.0) as i32) % 360;
         }
     }
 }

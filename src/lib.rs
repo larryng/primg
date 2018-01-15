@@ -62,7 +62,7 @@ pub mod android {
     static mut MODEL_OPT: Option<Model> = None;
 
     #[no_mangle]
-    pub unsafe extern fn Java_com_github_larryng_primitivewallpaper_jni_Primg_jniInit(
+    pub unsafe extern fn Java_com_github_larryng_primage_jni_Primg_jniInit(
         env: JNIEnv, _: JClass, img_path: JString, shape_type: jint, m: jint) -> jobject {
 
         let in_path: String = env.get_string(img_path).expect("wtf").into();
@@ -94,7 +94,7 @@ pub mod android {
 
         let model = Model::new(img, cpus, config.out_size);
 
-        let class = env.find_class("com/github/larryng/primitivewallpaper/jni/PrimgInitResult").expect("couldn't load class");
+        let class = env.find_class("com/github/larryng/primage/jni/PrimgInitResult").expect("couldn't load class");
         let constructor = env.get_method_id(class, "<init>", "(Ljava/lang/Object;III)V").expect("couldn't get constructor");
         let debug: String = format!("cpus: get={}, physical={}", num_cpus::get(), num_cpus::get_physical());
         let debug = JValue::Object(env.new_string(debug).unwrap().into());
@@ -111,7 +111,7 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub unsafe extern fn Java_com_github_larryng_primitivewallpaper_jni_Primg_jniStep(
+    pub unsafe extern fn Java_com_github_larryng_primage_jni_Primg_jniStep(
         env: JNIEnv, _: JClass) -> jstring {
 
         let config = match CONFIG_OPT {

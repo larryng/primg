@@ -26,7 +26,7 @@ impl Pixels {
     pub fn from(img: RgbaImage) -> Pixels {
         let w = img.width() as usize;
         let h = img.height() as usize;
-        assert!(w * h < SIZE * SIZE);
+        assert!(w * h <= SIZE * SIZE);
         let mut img: Vec<u8> = img.into_raw();
         img.resize(Pixels::BUF_SIZE, 0);
         let mut buf = [0; Pixels::BUF_SIZE];
