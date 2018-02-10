@@ -6,7 +6,7 @@ use clap::{Arg, App};
 fn main() {
     let matches = App::new("primg")
         .arg(Arg::with_name("shape")
-            .help("Shape type (triangle, ellipse)")
+            .help("Shape type (triangle, ellipse, rectangle, rotated-rectangle)")
             .short("t")
             .long("shape")
             .takes_value(true)
