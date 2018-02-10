@@ -91,23 +91,6 @@ impl Pixels {
                     let cr = *self.buf.get_unchecked(i + 0) as i32;
                     let cg = *self.buf.get_unchecked(i + 1) as i32;
                     let cb = *self.buf.get_unchecked(i + 2) as i32;
-//                let t = target.get_arr(x, line.y);
-//                let tr = t[0] as i32;
-//                let tg = t[1] as i32;
-//                let tb = t[2] as i32;
-//                let c = self.get_arr(x, line.y);
-//                let cr = c[0] as i32;
-//                let cg = c[1] as i32;
-//                let cb = c[2] as i32;
-
-//                let t = target.get(x, line.y);
-//                let tr = t.r() as i32;
-//                let tg = t.g() as i32;
-//                let tb = t.b() as i32;
-//                let c = self.get(x, line.y);
-//                let cr = c.r() as i32;
-//                let cg = c.g() as i32;
-//                let cb = c.b() as i32;
                     rsum += (tr - cr) * a + cr * 0x101;
                     gsum += (tg - cg) * a + cg * 0x101;
                     bsum += (tb - cb) * a + cb * 0x101;

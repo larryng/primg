@@ -122,20 +122,6 @@ impl Model {
         lines.push(String::from("</g>"));
         lines.push(String::from("</svg>"));
         lines.join("\n")
-//        bg := model.Background
-//        var lines []string
-//        lines = append(lines, fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"%d\" height=\"%d\">", model.Sw, model.Sh))
-//        lines = append(lines, fmt.Sprintf("<rect x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" fill=\"#%02x%02x%02x\" />", model.Sw, model.Sh, bg.R, bg.G, bg.B))
-//        lines = append(lines, fmt.Sprintf("<g transform=\"scale(%f) translate(0.5 0.5)\">", model.Scale))
-//        for i, shape := range model.Shapes {
-//            c := model.Colors[i]
-//            attrs := "fill=\"#%02x%02x%02x\" fill-opacity=\"%f\""
-//            attrs = fmt.Sprintf(attrs, c.R, c.G, c.B, float64(c.A)/255)
-//            lines = append(lines, shape.SVG(attrs))
-//        }
-//        lines = append(lines, "</g>")
-//        lines = append(lines, "</svg>")
-//        return strings.Join(lines, "\n")
     }
 
     pub fn save_rasterized(&self, path: &str) -> io::Result<()> {
