@@ -2,6 +2,11 @@
 name = "primg"
 version = "0.1.0"
 authors = ["Larry Ng <ng.larry@gmail.com>"]
+description = "Reproducing images with geometric primitives.  Ported from https://github.com/fogleman/primitive"
+homepage = "https://github.com/larryng/primg"
+repository = "https://github.com/larryng/primg"
+license = "MIT"
+keywords = ["primitive", "image"]
 
 [dependencies]
 clap = "2.29"
